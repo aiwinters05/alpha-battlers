@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>testing chat</title>
+</head>
+
+<body>
+    <h1>WSChat</h1>
+
+    <input type="text" id="messageInput">
+
+    <button id="sendButton">Send</button>
+
+    <script>
+        const socket = new WebSocket("ws://localhost:3001");
+
+        const input = document.getElementById("messageInput");
+        const button = document.getElementById("sendButton");
+
+        button.addEventListener("click", () => {
+            const message = input.value;
+
+            if (message !== "") {
+                socket.send(message);
+                input.value = "";
+            }
+        });
+    </script>
+</body>
+</html>
