@@ -1,105 +1,131 @@
-export let TILES = {
-	E: {
+export let TILES = [
+	{
+		letter: "E",
 		value: 1,
 		rate: 11.0
 	},
-	S: {
+	{
+		letter: "S",
 		value: 1,
 		rate: 8.5
 	},
-	I: {
+	{
+		letter: "I",
 		value: 1,
 		rate: 8.0
 	},
-	A: {
+	{
+		letter: "A",
 		value: 1,
 		rate: 7.5
 	},
-	N: {
+	{
+		letter: "N",
 		value: 1,
 		rate: 7.0,
 	},
-	R: {
+	{
+		letter: "R",
 		value: 1,
 		rate: 7.0
 	},
-        O: {
+        {
+		letter: "O",
                 value: 1,
                 rate: 6.0
         },
-        T: {
+        {
+		letter: "T",
                 value: 1,
                 rate: 6.0
         },
-        L: {
+        {
+		letter: "L",
                 value: 1,
                 rate: 5.0
         },
-        C: {
+        {
+		letter: "C",
                 value: 1,
                 rate: 4.0
         },
-        D: {
+        {
+		letter: "D",
                 value: 1,
                 rate: 3.5
         },
-	U: {
+	{
+		letter: "U",
                 value: 1,
                 rate: 3.3
         },
-        G: {
+        {
+		letter: "G",
                 value: 1,
                 rate: 3.0
         },	
-        P: {
+        {
+		letter: "P",
                 value: 2,
                 rate: 3.0
         },
-        M: {
+        {
+		letter: "M",
                 value: 2,
                 rate: 2.7
         },
-        H: {
+        {
+		letter: "H",
                 value: 2,
                 rate: 2.3
         },
-	B: {
+	{
+		letter: "B",
                 value: 2,
                 rate: 2.2
         },
-        Y: {
+        {
+		letter: "Y",
                 value: 2,
                 rate: 1.6
         },
-        F: {
+        {
+		letter: "F",
                 value: 2,
                 rate: 1.4
         },
-        K: {
+        {
+		letter: "K",
                 value: 2,
                 rate: 1.0
         },
-        V: {
+        {
+		letter: "V",
                 value: 2,
                 rate: 1.0
         },
-        W: {
+        {
+		letter: "W",
                 value: 2,
                 rate: 1.0
         },
-        J: {
+        {
+		letter: "J",
                 value: 3,
                 rate: 1.0
         },
-        Q: {
+        {
+		letter: "Q",
                 value: 3,
                 rate: 1.0
         },
-        X: {
+        {
+		letter: "X",
                 value: 3,
                 rate: 1.0
         },
-        Z: {
+        {
+		letter: "Z",
                 value: 3,
                 rate: 1.0
         }
