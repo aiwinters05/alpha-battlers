@@ -8,7 +8,7 @@
 			padding: 10px 20px 20px 20px;
 			border-radius: 4px;
 			gap: 6px;
-			background-color: #808080;
+			background-color: #a5a5a5;
 		}
 		.tile {
 			width: 50px;
@@ -21,12 +21,24 @@
 			font-size: 32px;
 			font-weight: bold;
 			user-select: none;
+			cursor: pointer;
+		}
+		.tile.selected {
+			transform: translateY(-5px);
+			background-color: #7b7b7b;
 		}
 		.score {
 			position: absolute;
 			bottom: 4px;
 			right: 6px;
-			font-size: 11px;
+			font-size: 10px;
+			font-weight: bold;
+		}
+		.word-display {
+			height: 40px;
+			margin-bottom: 10px;
+			text-align: center;
+			font-size: 32px;
 			font-weight: bold;
 		}
 	</style>

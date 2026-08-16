@@ -129,4 +129,4 @@ export let TILES = [
                 value: 3,
                 rate: 1.0
         }
-};
+];
