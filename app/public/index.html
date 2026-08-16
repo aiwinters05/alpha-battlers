@@ -1,30 +1,41 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <title>testing chat</title>
-</head>
 
-<body>
-    <h1>WSChat</h1>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>AlphaBattlers</title>
+        <link rel="stylesheet" href="style.css">
+    </head>
 
-    <input type="text" id="messageInput">
+    <body>
 
-    <button id="sendButton">Send</button>
+    <h1 id="header" class="text">A L P H A <span class="highlighted-text">B A T T L E R S</span></h1>
+
+    <h1 class="text">Battle your friends <br> or a stranger</h1>
+
+    <div class="buttons">
+        <button id="join">Join</button>
+        <button id="signin">Sign in</button>
+    </div>
+    
+    <br>
+
+    <img src="assets/demo.jpg"><figcaption class="text">A look at our gameplay</figcaption>
+
+    </body>
 
     <script>
-        const socket = new WebSocket("ws://localhost:3001");
+        let joinButton = document.getElementById("join");
+        let signinButton = document.getElementById("signin");
 
-        const input = document.getElementById("messageInput");
-        const button = document.getElementById("sendButton");
-
-        button.addEventListener("click", () => {
-            const message = input.value;
-
-            if (message !== "") {
-                socket.send(message);
-                input.value = "";
-            }
+        joinButton.addEventListener("click", () => {
+            console.log("join button clicked");
         });
+
+        signinButton.addEventListener("click", () => {
+            console.log("sign in button clicked");
+        })
     </script>
-</body>
+
 </html>
