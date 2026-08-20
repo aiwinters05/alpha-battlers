@@ -13,8 +13,8 @@ export function createGameState(users) {
         let user = orderedUsers[i];
 
         let player = {
-            id = user.id,
-            username = user.username,
+            id: user.id,
+            username: user.username,
             turnOrder: i,
             rack: [],
             health: 100
