@@ -8,7 +8,7 @@ export function randomTile() {
     let random = Math.random() * 100;
     let current = 0;
 
-    for (let tile of tiles) {
+    for (let tile of TILES) {
         current +=  tile.rate;
 
         if (random < current) {
@@ -23,7 +23,7 @@ export function createTile() {
     return {
         id: crypto.randomUUID(),
         letter: tileData.letter,
-        points: tileData.points
+        points: tileData.value
     };
 }
 
@@ -81,6 +81,10 @@ export function removeTiles(player, playedTiles) {
     }
 }
 
+export function clearRack(player) {
+    player.rack.length = 0;
+}
+
 export function replenishRack(player, tilesPlayed) {
     let min = tilesPlayed - 1;
     let max = tilesPlayed + 2;
@@ -93,6 +97,22 @@ export function replenishRack(player, tilesPlayed) {
     }
 
     while (player.rack.length < MIN_TILE_COUNT) {
+        drawTile(player);
+    }
+}
+
+export function shuffleRack(player) {
+    let numTiles = player.rack.length;
+
+    clearRack(player);
+
+    numTiles--;
+
+    if (numTiles < MIN_TILE_COUNT) {
+        numTiles = MIN_TILE_COUNT;
+    }
+
+    while (player.rack.length < numTiles) {
         drawTile(player);
     }
 }
