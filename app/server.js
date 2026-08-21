@@ -11,6 +11,8 @@ app.listen(3000, () => {
 
 const wss = new WebSocket.Server({ port: 3001 });
 
+const clients = new Map();
+
 let uniqueId = 1;
 
 function getId(){
@@ -18,17 +20,43 @@ function getId(){
 }
 
 wss.on("connection", (ws) => {
-    console.log("WebSocket client connected");
+    //console.log("ws client connceted");
 
-    ws.id = getId();
+    newId = getId();
 
-    ws.on("message", (message) => {
-        console.log("Received:",ws.id, message.toString());
+    clients.set(newId,ws);
 
-        ws.send("Hello from server!");
+    console.log(`${newId} connected`);
+
+    ws.send(JSON.stringify({
+        type: "id",
+        id: newId
+    }))
+
+    ws.on("message", (data) => {
+        const msg = JSON.parse(data);
+
+        if (msg.type === "dm"){
+            const receiver = clients.get(Number(msg.to));
+            
+            if(!receiver){
+                ws.send(JSON.stringify({
+                    type: "error",
+                    message: " Player not found"
+                }));
+                return;
+            }
+
+            receiver.send(JSON.stringify({
+                type: "dm",
+                from: newId,
+                message: msg.message
+            }));
+        }
     });
 
     ws.on("close", () => {
-        console.log("Client disconnected");
+        clients.delete(newId);
+        console.log(`Client ${newId} disconnected`);
     });
 });

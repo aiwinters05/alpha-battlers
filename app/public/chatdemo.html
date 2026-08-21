@@ -8,6 +8,10 @@
     <h1>WSChat</h1>
 
     <input type="text" id="messageInput">
+    <input id="sendTo">
+    <input  id="type">;
+    <div id="messages">
+    </div>
 
     <button id="sendButton">Send</button>
 
@@ -15,16 +19,37 @@
         const socket = new WebSocket("ws://localhost:3001");
 
         const input = document.getElementById("messageInput");
+        const sendTo = document.getElementById("sendTo");
+        const msgType = document.getElementById("type");
+        const msgDiv = document.getElementById("messages")
         const button = document.getElementById("sendButton");
 
         button.addEventListener("click", () => {
-            const message = input.value;
+            const messageVal = input.value;
+            const sendToVal = sendTo.value;
+            const typeVal = msgType.value;
 
-            if (message !== "") {
-                socket.send(message);
-                input.value = "";
-            }
+            socket.send(JSON.stringify({
+                type: typeVal,
+                to: sendToVal,
+                message: messageVal
+            }));
         });
+
+        socket.onmessage = (event) => {
+        const msg = JSON.parse(event.data);
+
+        if (msg.type === "id") {
+            document.querySelector("h1").textContent = "WSChat (my id: " + msg.id + ")";
+        }
+
+        if (msg.type === "dm") {
+            let newP = document.createElement("p");
+            newP.textContent = msg.message;
+            msgDiv.appendChild(newP);
+        }
+
+    }       
     </script>
 </body>
 </html>
