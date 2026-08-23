@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+  <head>
+      <title>testing connections</title>
+  </head>
+
+  <body>
+      <p>Your ID: <strong id="my-id">connecting...</strong></p>
+    <p>Opponent: <strong id="opponent-id">none</strong></p>
+    
+    <legend>Connect</legend>
+    <input id="target-id" placeholder="opponent id" type="number" />
+    <button id="request-btn">Request Connection</button>
+    <button id="leave-btn">Leave Game</button>
+
+    <legend>Incoming Request</legend>
+    <p id="incoming-text">none</p>
+    <button id="accept-btn" disabled>Accept</button>
+  <button id="reject-btn" disabled>Reject</button>
+    
+    <legend>Play a Word</legend>
+    <input id="word-input" placeholder="word" type="text" />
+    <input id="points-input" placeholder="points" type="number" />
+    <button id="play-btn">Play Word</button>
+    
+    <h4>Log</h4>
+    <div id="log"></div>
+    
+    <script>
+      let ws = null;
+      let myId = null;
+      let currentConnectionId = null;
+      let opponentId = null;
+      let pendingIncoming = null; // { from, connectionId }
+      
+      function log(msg) {
+        const el = document.getElementById("log");
+        const line = document.createElement("div");
+        line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+        el.appendChild(line);
+        el.scrollTop = el.scrollHeight;
+      }
+      
+      function connectToServer() {
+        ws = new WebSocket("ws://localhost:3001");
+      
+        ws.addEventListener("open", () => log("connected to server"));
+      
+        ws.addEventListener("message", (event) => {
+          const msg = JSON.parse(event.data);
+          handleMessage(msg);
+        });
+      
+        ws.addEventListener("close", () => {
+          log("disconnected from server");
+          myId = null;
+          currentConnectionId = null;
+          opponentId = null;
+          document.getElementById("my-id").textContent = "disconnected";
+          document.getElementById("opponent-id").textContent = "none";
+        });
+      }
+      
+      function handleMessage(msg) {
+        switch (msg.type) {
+          case "id":
+            myId = msg.id;
+            document.getElementById("my-id").textContent = myId;
+            log(`assigned id ${myId}`);
+            break;
+      
+          case "incoming_connect_request":
+            pendingIncoming = { from: msg.from, connectionId: msg.connectionId };
+            document.getElementById("incoming-text").textContent =
+              `Player ${msg.from} wants to connect`;
+            document.getElementById("accept-btn").disabled = false;
+            document.getElementById("reject-btn").disabled = false;
+            log(`incoming request from ${msg.from}`);
+            break;
+      
+          case "connect_accepted":
+            currentConnectionId = msg.connectionId;
+            opponentId = msg.with;
+            document.getElementById("opponent-id").textContent = opponentId;
+            log(`connected to opponent ${opponentId}`);
+            clearIncoming();
+            break;
+      
+          case "connect_rejected":
+            log(`your request was rejected`);
+            break;
+      
+          case "connect_request_failed":
+            log(`request failed: ${msg.message}`);
+            break;
+      
+          case "opponent_disconnected":
+            log(`opponent ${msg.from} disconnected`);
+            currentConnectionId = null;
+            opponentId = null;
+            document.getElementById("opponent-id").textContent = "none";
+            break;
+      
+          case "opponent_played":
+            log(`opponent played "${msg.word}" for ${msg.points} points`);
+            break;
+      
+          case "error":
+            log(`server error: ${msg.message}`);
+            break;
+      
+          default:
+            log(`unhandled message type: ${msg.type}`);
+        }
+      }
+      
+      function clearIncoming() {
+        pendingIncoming = null;
+        document.getElementById("incoming-text").textContent = "none";
+        document.getElementById("accept-btn").disabled = true;
+        document.getElementById("reject-btn").disabled = true;
+      }
+      
+      
+      document.getElementById("request-btn").addEventListener("click", () => {
+        const to = Number(document.getElementById("target-id").value);
+        if (!to) {
+          log("enter a target id first");
+          return;
+        }
+        ws.send(JSON.stringify({ type: "connect_request", to }));
+        log(`requested connection to ${to}`);
+      });
+      
+      document.getElementById("leave-btn").addEventListener("click", () => {
+        ws.send(JSON.stringify({ type: "disconnect_request" }));
+        currentConnectionId = null;
+        opponentId = null;
+        document.getElementById("opponent-id").textContent = "none";
+        log("left game");
+      });
+      
+      document.getElementById("accept-btn").addEventListener("click", () => {
+        if (!pendingIncoming) return;
+        ws.send(JSON.stringify({ type: "connect_accept", connectionId: pendingIncoming.connectionId }));
+        log(`accepted request from ${pendingIncoming.from}`);
+      });
+      
+      document.getElementById("reject-btn").addEventListener("click", () => {
+        if (!pendingIncoming) return;
+        ws.send(JSON.stringify({ type: "connect_reject", connectionId: pendingIncoming.connectionId }));
+        log(`rejected request from ${pendingIncoming.from}`);
+        clearIncoming();
+      });
+      
+      document.getElementById("play-btn").addEventListener("click", () => {
+        if (!opponentId) {
+          log("not connected to an opponent");
+          return;
+        }
+        const word = document.getElementById("word-input").value;
+        const points = Number(document.getElementById("points-input").value);
+        ws.send(JSON.stringify({ type: "play_word", word, points }));
+        log(`played "${word}" for ${points} points`);
+      });
+      
+      connectToServer();
+    </script>
+  </body>
+</html>
