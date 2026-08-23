@@ -32,28 +32,39 @@ export function createGameState(users) {
     return gameState;
 }
 
-export function getPlayer(gameState, turnOrder) {
-    return gameState.players[turnOrder];
+export function getPlayer(gameState, playerId) {
+    for (let i = 0; i < gameState.players.length; i++) {
+
+        if (gameState.players[i].id === playerId) {
+
+            return gameState.players[i];
+        }
+    }
 }
 
-export function getOpponent(gameState, turnOrder) {
-    if (turnOrder == 0) {
-        return gameState.players[1];
+
+export function getOpponent(gameState, playerId) {
+    for (let i = 0; i < gameState.players.length; i++) {
+
+        if (gameState.players[i].id !== playerId) {
+
+            return gameState.players[i];
+        }
     }
-    
-    return gameState.players[0];
 }
 
 export function getCurrentPlayer(gameState) {
     return gameState.players[gameState.currentPlayer];
 }
 
-export function isPlayerTurn(gameState, turnOrder) {
-    return gameState.currentPlayer == turnOrder;
+export function isPlayerTurn(gameState, playerId) {
+    let player = getPlayer(gameState, playerId);
+
+    return gameState.currentPlayer === player.turnOrder;
 }
 
 export function switchTurn(gameState) {
-    if (gameState.currentPlayer == 0) {
+    if (gameState.currentPlayer === 0) {
         gameState.currentPlayer = 1;
     } else {
         gameState.currentPlayer = 0;

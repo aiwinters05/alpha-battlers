@@ -2,7 +2,7 @@ import { TILES } from "../data/tiles.js";
 
 let INIT_TILE_COUNT = 10;
 let MIN_TILE_COUNT = 6;
-let MAX_TILE_COUNT = 16;
+let MAX_TILE_COUNT = 14;
 
 export function randomTile() {
     let random = Math.random() * 100;
