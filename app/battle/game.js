@@ -1,3 +1,5 @@
+import { fillRack } from "./rack.js";
+
 export function createGameState(users) {
     let orderedUsers;
 
@@ -19,6 +21,8 @@ export function createGameState(users) {
             rack: [],
             health: 100
         }
+
+        fillRack(player);
         
         players.push(player);
     }
