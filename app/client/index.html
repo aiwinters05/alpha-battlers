@@ -10,124 +10,137 @@
 <body>
     <table id="opponentRack" class="rack opponent-rack">
         <tr>
-            <td class="tile">
+            <td class="tile opponent-tile">
                 <div class="letter">?</div>
                 <div class="points"></div>
             </td>
-            <td class="tile">
+            <td class="tile opponent-tile">
                 <div class="letter">?</div>
                 <div class="points"></div>
             </td>
-            <td class="tile">
+            <td class="tile opponent-tile">
                 <div class="letter">?</div>
                 <div class="points"></div>
             </td>
-            <td class="tile">
+            <td class="tile opponent-tile">
                 <div class="letter">?</div>
                 <div class="points"></div>
             </td>
-            <td class="tile">
+            <td class="tile opponent-tile">
                 <div class="letter">?</div>
                 <div class="points"></div>
             </td>
-            <td class="tile">
+            <td class="tile opponent-tile">
                 <div class="letter">?</div>
                 <div class="points"></div>
             </td>
-            <td class="tile">
+            <td class="tile opponent-tile">
                 <div class="letter">?</div>
                 <div class="points"></div>
             </td>
-            <td class="tile">
+            <td class="tile opponent-tile">
                 <div class="letter">?</div>
                 <div class="points"></div>
             </td>
-            <td class="tile">
+            <td class="tile opponent-tile">
                 <div class="letter">?</div>
                 <div class="points"></div>
             </td>
-            <td class="tile">
+            <td class="tile opponent-tile">
                 <div class="letter">?</div>
                 <div class="points"></div>
             </td>
-            <td class="tile">
+            <td class="tile opponent-tile">
                 <div class="letter">?</div>
                 <div class="points"></div>
             </td>
-            <td class="tile">
+            <td class="tile opponent-tile">
                 <div class="letter">?</div>
                 <div class="points"></div>
             </td>
-            <td class="tile">
+            <td class="tile opponent-tile">
                 <div class="letter">?</div>
                 <div class="points"></div>
             </td>
-            <td class="tile">
+            <td class="tile opponent-tile">
                 <div class="letter">?</div>
                 <div class="points"></div>
             </td>
         </tr>
     </table>
-    <table id="playerRack" class="rack player-rack"></table>
-        <tr>
-            <td class="tile">
-                <div class="letter"></div>
-                <div class="points"></div>
-            </td>
-            <td class="tile">
-                <div class="letter"></div>
-                <div class="points"></div>
-            </td>
-            <td class="tile">
-                <div class="letter"></div>
-                <div class="points"></div>
-            </td>
-            <td class="tile">
-                <div class="letter"></div>
-                <div class="points"></div>
-            </td>
-            <td class="tile">
-                <div class="letter"></div>
-                <div class="points"></div>
-            </td>
-            <td class="tile">
-                <div class="letter"></div>
-                <div class="points"></div>
-            </td>
-            <td class="tile">
-                <div class="letter"></div>
-                <div class="points"></div>
-            </td>
-            <td class="tile">
-                <div class="letter"></div>
-                <div class="points"></div>
-            </td>
-            <td class="tile">
-                <div class="letter"></div>
-                <div class="points"></div>
-            </td>
-            <td class="tile">
-                <div class="letter"></div>
-                <div class="points"></div>
-            </td>
-            <td class="tile">
-                <div class="letter"></div>
-                <div class="points"></div>
-            </td>
-            <td class="tile">
-                <div class="letter"></div>
-                <div class="points"></div>
-            </td>
-            <td class="tile">
-                <div class="letter"></div>
-                <div class="points"></div>
-            </td>
-            <td class="tile">
-                <div class="letter"></div>
-                <div class="points"></div>
-            </td>
-        </tr>
-    </table>
-    <script type="module" src="js/ui.js"></script>
+    <div id="playerArea" class="player-area">
+        <div class="rack-section">
+            <div id="wordDisplay" class="word-display"></div>
+            <table id="playerRack" class="rack player-rack">
+                <tr>
+                    <td class="tile player-tile">
+                        <div class="letter"></div>
+                        <div class="points"></div>
+                    </td>
+                    <td class="tile player-tile">
+                        <div class="letter"></div>
+                        <div class="points"></div>
+                    </td>
+                    <td class="tile player-tile">
+                        <div class="letter"></div>
+                        <div class="points"></div>
+                    </td>
+                    <td class="tile player-tile">
+                        <div class="letter"></div>
+                        <div class="points"></div>
+                    </td>
+                    <td class="tile player-tile">
+                        <div class="letter"></div>
+                        <div class="points"></div>
+                    </td>
+                    <td class="tile player-tile">
+                        <div class="letter"></div>
+                        <div class="points"></div>
+                    </td>
+                    <td class="tile player-tile">
+                        <div class="letter"></div>
+                        <div class="points"></div>
+                    </td>
+                    <td class="tile player-tile">
+                        <div class="letter"></div>
+                        <div class="points"></div>
+                    </td>
+                    <td class="tile player-tile">
+                        <div class="letter"></div>
+                        <div class="points"></div>
+                    </td>
+                    <td class="tile player-tile">
+                        <div class="letter"></div>
+                        <div class="points"></div>
+                    </td>
+                    <td class="tile player-tile">
+                        <div class="letter"></div>
+                        <div class="points"></div>
+                    </td>
+                    <td class="tile player-tile">
+                        <div class="letter"></div>
+                        <div class="points"></div>
+                    </td>
+                    <td class="tile player-tile">
+                        <div class="letter"></div>
+                        <div class="points"></div>
+                    </td>
+                    <td class="tile player-tile">
+                        <div class="letter"></div>
+                        <div class="points"></div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div id="hudArea" class="hud-area">
+            <div id="playerHp" class="hp">HP: 100/100</div>
+            <div id="playerButtons" class="player-buttons">
+                <button id="playWord" class="player-button play-word">Play Word</button>
+                <button id="returnAll" class="player-button return-all">Return Tiles To Rack</button>
+                <button id="shuffle" class="player-button shuffle">Shuffle</button>
+            </div>
+        </div>
+    </div>
+    <script type="module" src="ui.js"></script>
 </body>
 </html>
