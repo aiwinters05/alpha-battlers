@@ -2,29 +2,33 @@
 <html>
   <head>
       <title>testing connections</title>
+      <link rel="stylesheet" href="style.css">
   </head>
 
   <body>
-      <p>Your ID: <strong id="my-id">connecting...</strong></p>
-    <p>Opponent: <strong id="opponent-id">none</strong></p>
+    <div class="text">
+        <p>Your ID: <strong id="my-id">connecting...</strong></p>
+        <p>Opponent: <strong id="opponent-id">none</strong></p>
     
-    <legend>Connect</legend>
-    <input id="target-id" placeholder="opponent id" type="number" />
-    <button id="request-btn">Request Connection</button>
-    <button id="leave-btn">Leave Game</button>
+        <legend>Connect</legend>
+        <input id="target-id" placeholder="opponent id" type="number" />
+        <div class="buttons">
+            <button id="request-btn">Request Connection</button>
+            <button id="leave-btn">Leave Game</button>
+        </div>
 
-    <legend>Incoming Request</legend>
-    <p id="incoming-text">none</p>
-    <button id="accept-btn" disabled>Accept</button>
-    <button id="reject-btn" disabled>Reject</button>
+        <legend>Incoming Request</legend>
+        <p id="incoming-text">none</p>
+        <div class="buttons">
+            <button id="accept-btn" disabled>Accept</button>
+            <button id="reject-btn" disabled>Reject</button>
+        </div>
+        
+        <h4>Log</h4>
+        <div id="log"></div>
+
+    </div>
     
-    <legend>Play a Word</legend>
-    <input id="word-input" placeholder="word" type="text" />
-    <input id="points-input" placeholder="points" type="number" />
-    <button id="play-btn">Play Word</button>
-    
-    <h4>Log</h4>
-    <div id="log"></div>
     
     <script>
       let ws = null;
@@ -153,16 +157,6 @@
         clearIncoming();
       });
       
-      document.getElementById("play-btn").addEventListener("click", () => {
-        if (!opponentId) {
-          log("not connected to an opponent");
-          return;
-        }
-        const word = document.getElementById("word-input").value;
-        const points = Number(document.getElementById("points-input").value);
-        ws.send(JSON.stringify({ type: "play_word", word, points }));
-        log(`played "${word}" for ${points} points`);
-      });
       
       connectToServer();
     </script>
