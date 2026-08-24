@@ -1,5 +1,6 @@
 import { getOpponent, switchTurn } from "./game.js";
 import { getPlayedTiles, removeTiles, replenishRack, shuffleRack } from "./rack.js";
+import { isValidWord } from "./validator.js";
 
 export function calculateDamage(playedTiles) {
     let damage = 0;
@@ -27,10 +28,6 @@ export function formWord(playedTiles) {
     }
 
     return word;
-}
-
-export function isValidWord(word) {
-    return true;
 }
 
 export function playWord(gameState, player, tileIds) {

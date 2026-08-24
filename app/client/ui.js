@@ -1,10 +1,11 @@
-import { isValidWord, playWord, selectShuffle } from "../battle/combat.js";
+import { playWord, selectShuffle } from "../battle/combat.js";
 import { createGameState, getPlayer, getOpponent, MAX_HEALTH } from "../battle/game.js";
-import { shuffleRack } from "../battle/rack.js";
+import { isValidWord, loadWords } from "../battle/validator.js";
 
 let myPlayerId = null;
 let currentWord = "";
 let selectedTileIds = [];
+let allUsedTileIds = [];
 
 let playerRack = document.getElementById("playerRack");
 let wordDisplay = document.getElementById("wordDisplay");
@@ -27,8 +28,10 @@ export function setPlayerId(playerId) {
 }
 
 export function renderPlayerRack(gameState) {
+    // returns the player object
     let player = getPlayer(gameState, myPlayerId);
     
+    //iterates through, removes any text content + selected tile CSS
     clearRack(playerRack);
 
     let tbody = playerRack.children[0];
@@ -39,6 +42,8 @@ export function renderPlayerRack(gameState) {
         let td = row.children[i];
         
         td.classList.add("tile");
+
+        //removes CSS that makes it appear empty
         td.classList.remove("empty");
 
         let letter = td.children[0];
@@ -48,10 +53,15 @@ export function renderPlayerRack(gameState) {
         points.textContent = tile.points;
 
         td.addEventListener("click", () => {
-            if (!selectedTileIds.includes(tile.id)) {
+            if (!selectedTileIds.includes(tile.id) || !allUsedTileIds.includes(tile.id)) {
+                //adds tile ID to list of tile IDs that is used to identify the word
                 selectedTileIds.push(tile.id);
+                allUsedTileIds.push(tile.id);
+                
+                //adds CSS that makes it appear selected
                 td.classList.add("selected");
-
+                
+                //adds letter to word display and string of current word
                 updateCurrentWord(tile.letter);
             }
         })
@@ -137,6 +147,16 @@ function clearRack(rack) {
     }
 }
 
+export function resetSelectedTiles(gameState) {
+    selectedTileIds = [];
+    currentWord = "";
+
+    renderPlayerRack(gameState);
+    renderWordDisplay();
+    playWordButton.disabled = true;
+    returnAllButton.disabled = true;
+}
+
 playWordButton.addEventListener("click", () => {
     let player = getPlayer(gameState, myPlayerId);
 
@@ -144,23 +164,11 @@ playWordButton.addEventListener("click", () => {
     console.log(`${player.username} played ${result.word} for ${result.damage} damage!`)
     renderOpponentHp(gameState);
 
-    selectedTileIds = [];
-    currentWord = "";
-
-    renderPlayerRack(gameState);
-    renderWordDisplay();
-    playWordButton.disabled = true;
-    returnAllButton.disabled = true;
+    resetSelectedTiles(gameState);    
 })
 
 returnAllButton.addEventListener("click", () => {
-    selectedTileIds = [];
-    currentWord = "";
-
-    renderPlayerRack(gameState);
-    renderWordDisplay();
-    playWordButton.disabled = true;
-    returnAllButton.disabled = true;
+    resetSelectedTiles(gameState);  
 })
 
 shuffleButton.addEventListener("click", () => {
@@ -169,29 +177,25 @@ shuffleButton.addEventListener("click", () => {
     let result = selectShuffle(gameState, player);
     console.log(`${player.username} shuffled!`)
 
-    selectedTileIds = [];
-    currentWord = "";
-
-    renderPlayerRack(gameState);
-    renderWordDisplay();
-    playWordButton.disabled = true;
-    returnAllButton.disabled = true;
+    resetSelectedTiles(gameState);  
 })
+
+await loadWords();
 
 let users = [
 	{
 		id: "0001",
-		username: "Alice1"
+		username: "Genevieve"
 	},
 	{
 		id: "0002",
-		username: "Bob2"
+		username: "Aubry"
 	}
 ];
 
 let gameState = createGameState(users);
 
-setPlayerId("0002");
+setPlayerId("0001");
 
 renderPlayerRack(gameState);
 renderOpponentRack(gameState);
@@ -199,5 +203,3 @@ renderPlayerUsername(gameState);
 renderPlayerHp(gameState);
 renderOpponentUsername(gameState);
 renderOpponentHp(gameState);
-
-console.log(gameState.players[0].rack);
