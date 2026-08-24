@@ -45,7 +45,7 @@ export function playWord(gameState, player, tileIds) {
         }
     }
 
-    let opponent = getOpponent(gameState, player.turnOrder);
+    let opponent = getOpponent(gameState, player.id);
 
     let damage = calculateDamage(playedTiles);
 
