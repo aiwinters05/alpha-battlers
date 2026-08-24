@@ -1,5 +1,7 @@
 import { fillRack } from "./rack.js";
 
+export let MAX_HEALTH = 60;
+
 export function createGameState(users) {
     let orderedUsers;
 
@@ -19,7 +21,7 @@ export function createGameState(users) {
             username: user.username,
             turnOrder: i,
             rack: [],
-            health: 100
+            health: MAX_HEALTH
         }
 
         fillRack(player);
