@@ -8,6 +8,8 @@ body {
     align-items: center;
 
     box-sizing: border-box;
+
+    background-color:#ffedd9;
 }
 
 .player-area,

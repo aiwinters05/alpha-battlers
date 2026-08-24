@@ -1,21 +1,23 @@
 import { isValidWord, playWord } from "../battle/combat.js";
-import { createGameState, getPlayer } from "../battle/game.js";
+import { createGameState, getPlayer, getOpponent, MAX_HEALTH } from "../battle/game.js";
 
 let myPlayerId = null;
 let currentWord = "";
 let selectedTileIds = [];
 
 let playerRack = document.getElementById("playerRack");
+let wordDisplay = document.getElementById("wordDisplay");
+let playerHp = document.getElementById("playerHp");
 
 let opponentRack = document.getElementById("opponentRack");
-
-let wordDisplay = document.getElementById("wordDisplay");
+let opponentHp = document.getElementById("opponentHp");
 
 let playWordButton = document.getElementById("playWord");
 let returnAllButton = document.getElementById("returnAll");
 let shuffleButton = document.getElementById("shuffle");
 
 playWordButton.disabled = true;
+returnAllButton.disabled = true;
 
 export function setPlayerId(playerId) {
     myPlayerId = playerId;
@@ -24,7 +26,7 @@ export function setPlayerId(playerId) {
 export function renderPlayerRack(gameState) {
     let player = getPlayer(gameState, myPlayerId);
     
-    clearRack();
+    clearRack(playerRack);
 
     let tbody = playerRack.children[0];
     let row = tbody.children[0];
@@ -53,24 +55,57 @@ export function renderPlayerRack(gameState) {
     }
 }
 
+export function renderOpponentRack(gameState) {
+    let opponent = getOpponent(gameState, myPlayerId);
+    
+    clearRack(opponentRack);
+
+    let tbody = opponentRack.children[0];
+    let row = tbody.children[0];
+
+    for (let i = 0; i < opponent.rack.length; i++) {
+        let td = row.children[i];
+        
+        td.classList.add("tile");
+        td.classList.remove("empty");
+
+        let letter = td.children[0];
+
+        letter.textContent = "?"
+    }
+}
+
 function updateCurrentWord(letter) {
     currentWord += letter;
 
     renderWordDisplay();
 
-    validateWord();
+    updateButtons();
 }
 
 function renderWordDisplay() {
     wordDisplay.textContent = currentWord;
 }
 
-function validateWord() {
+function updateButtons() {
     playWordButton.disabled = !isValidWord(currentWord);
+    returnAllButton.disabled = (currentWord.length === 0);
 }
 
-function clearRack() {
-    let tbody = playerRack.children[0]; 
+function renderPlayerHp(gameState) {
+    let player = getPlayer(gameState, myPlayerId);
+
+    playerHp.textContent = `HP: [${player.health}/${MAX_HEALTH}]`;
+}
+
+function renderOpponentHp(gameState) {
+    let opponent = getOpponent(gameState, myPlayerId);
+
+    opponentHp.textContent = `HP: [${opponent.health}/${MAX_HEALTH}]`;
+}
+
+function clearRack(rack) {
+    let tbody = rack.children[0]; 
     let row = tbody.children[0];
 
     for (let i = 0; i < row.children.length; i++) {
@@ -90,7 +125,9 @@ function clearRack() {
 playWordButton.addEventListener("click", () => {
     let player = getPlayer(gameState, myPlayerId);
 
-    playWord(gameState, player, selectedTileIds);
+    let result = playWord(gameState, player, selectedTileIds);
+    console.log(`${player.username} played ${result.word} for ${result.damage} damage!`)
+    renderOpponentHp(gameState);
 
     selectedTileIds = [];
     currentWord = "";
@@ -98,7 +135,19 @@ playWordButton.addEventListener("click", () => {
     renderPlayerRack(gameState);
     renderWordDisplay();
     playWordButton.disabled = true;
+    returnAllButton.disabled = true;
 })
+
+returnAllButton.addEventListener("click", () => {
+    selectedTileIds = [];
+    currentWord = "";
+
+    renderPlayerRack(gameState);
+    renderWordDisplay();
+    playWordButton.disabled = true;
+    returnAllButton.disabled = true;
+})
+
 
 let users = [
 	{
@@ -116,5 +165,8 @@ let gameState = createGameState(users);
 setPlayerId("0001");
 
 renderPlayerRack(gameState);
+renderOpponentRack(gameState);
+renderPlayerHp(gameState);
+renderOpponentHp(gameState);
 
 console.log(gameState.players[0].rack);

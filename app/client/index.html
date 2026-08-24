@@ -8,66 +8,69 @@
 </head>
 
 <body>
-    <table id="opponentRack" class="rack opponent-rack">
-        <tr>
-            <td class="tile opponent-tile">
-                <div class="letter">?</div>
-                <div class="points"></div>
-            </td>
-            <td class="tile opponent-tile">
-                <div class="letter">?</div>
-                <div class="points"></div>
-            </td>
-            <td class="tile opponent-tile">
-                <div class="letter">?</div>
-                <div class="points"></div>
-            </td>
-            <td class="tile opponent-tile">
-                <div class="letter">?</div>
-                <div class="points"></div>
-            </td>
-            <td class="tile opponent-tile">
-                <div class="letter">?</div>
-                <div class="points"></div>
-            </td>
-            <td class="tile opponent-tile">
-                <div class="letter">?</div>
-                <div class="points"></div>
-            </td>
-            <td class="tile opponent-tile">
-                <div class="letter">?</div>
-                <div class="points"></div>
-            </td>
-            <td class="tile opponent-tile">
-                <div class="letter">?</div>
-                <div class="points"></div>
-            </td>
-            <td class="tile opponent-tile">
-                <div class="letter">?</div>
-                <div class="points"></div>
-            </td>
-            <td class="tile opponent-tile">
-                <div class="letter">?</div>
-                <div class="points"></div>
-            </td>
-            <td class="tile opponent-tile">
-                <div class="letter">?</div>
-                <div class="points"></div>
-            </td>
-            <td class="tile opponent-tile">
-                <div class="letter">?</div>
-                <div class="points"></div>
-            </td>
-            <td class="tile opponent-tile">
-                <div class="letter">?</div>
-                <div class="points"></div>
-            </td>
-            <td class="tile opponent-tile">
-                <div class="letter">?</div>
-                <div class="points"></div>
-            </td>
-        </tr>
-    </table>
+    <div id="opponentArea" class="opponent-area">
+        <div id="opponentHp" class ="hp"></div>
+        <table id="opponentRack" class="rack opponent-rack">
+            <tr>
+                <td class="tile opponent-tile">
+                    <div class="letter"></div>
+                    <div class="points"></div>
+                </td>
+                <td class="tile opponent-tile">
+                    <div class="letter"></div>
+                    <div class="points"></div>
+                </td>
+                <td class="tile opponent-tile">
+                    <div class="letter"></div>
+                    <div class="points"></div>
+                </td>
+                <td class="tile opponent-tile">
+                    <div class="letter"></div>
+                    <div class="points"></div>
+                </td>
+                <td class="tile opponent-tile">
+                    <div class="letter"></div>
+                    <div class="points"></div>
+                </td>
+                <td class="tile opponent-tile">
+                    <div class="letter"></div>
+                    <div class="points"></div>
+                </td>
+                <td class="tile opponent-tile">
+                    <div class="letter"></div>
+                    <div class="points"></div>
+                </td>
+                <td class="tile opponent-tile">
+                    <div class="letter"></div>
+                    <div class="points"></div>
+                </td>
+                <td class="tile opponent-tile">
+                    <div class="letter"></div>
+                    <div class="points"></div>
+                </td>
+                <td class="tile opponent-tile">
+                    <div class="letter"></div>
+                    <div class="points"></div>
+                </td>
+                <td class="tile opponent-tile">
+                    <div class="letter"></div>
+                    <div class="points"></div>
+                </td>
+                <td class="tile opponent-tile">
+                    <div class="letter"></div>
+                    <div class="points"></div>
+                </td>
+                <td class="tile opponent-tile">
+                    <div class="letter"></div>
+                    <div class="points"></div>
+                </td>
+                <td class="tile opponent-tile">
+                    <div class="letter"></div>
+                    <div class="points"></div>
+                </td>
+            </tr>
+        </table>
+    </div>
     <div id="playerArea" class="player-area">
         <div class="rack-section">
             <div id="wordDisplay" class="word-display"></div>
@@ -133,7 +136,7 @@
             </table>
         </div>
         <div id="hudArea" class="hud-area">
-            <div id="playerHp" class="hp">HP: 100/100</div>
+            <div id="playerHp" class="hp"></div>
             <div id="playerButtons" class="player-buttons">
                 <button id="playWord" class="player-button play-word">Play Word</button>
                 <button id="returnAll" class="player-button return-all">Return Tiles To Rack</button>
