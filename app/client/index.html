@@ -9,8 +9,11 @@
 
 <body>
     <div id="opponentArea" class="opponent-area">
-        <div id="opponentHp" class ="hp"></div>
-        <table id="opponentRack" class="rack opponent-rack">
+        <div id="opponentHud" class="hud-area">
+            <div id="opponentUsername" class="username-display"></div>
+            <div id="opponentHp" class="hp-display"></div>
+        </div>
+        <table id="opponentRack" class="rack">
             <tr>
                 <td class="tile opponent-tile">
                     <div class="letter"></div>
@@ -72,9 +75,9 @@
         </table>
     </div>
     <div id="playerArea" class="player-area">
-        <div class="rack-section">
+        <div class="rack-area">
             <div id="wordDisplay" class="word-display"></div>
-            <table id="playerRack" class="rack player-rack">
+            <table id="playerRack" class="rack">
                 <tr>
                     <td class="tile player-tile">
                         <div class="letter"></div>
@@ -135,8 +138,9 @@
                 </tr>
             </table>
         </div>
-        <div id="hudArea" class="hud-area">
-            <div id="playerHp" class="hp"></div>
+        <div id="playerHud" class="hud-area">
+            <div id="playerUsername" class="username-display"></div>
+            <div id="playerHp" class="hp-display"></div>
             <div id="playerButtons" class="player-buttons">
                 <button id="playWord" class="player-button play-word">Play Word</button>
                 <button id="returnAll" class="player-button return-all">Return Tiles To Rack</button>

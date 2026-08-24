@@ -39,14 +39,6 @@ body {
     border-collapse: collapse;
 }
 
-.player-rack {
-    background-color: white;
-}
-
-.opponent-rack {
-    background-color: dimgray;
-}
-
 .tile {
     position: relative;
 
@@ -84,12 +76,29 @@ body {
     font-size: 14px;
 }
 
-.hp {
+.username-display {
     min-width: 60px;
 
-    font-size: 20px;
+    font-size: 24px;
     font-weight: bold;
     text-align: center;
+}
+
+.hp-display {
+    min-width: 60px;
+
+    font-size: 28px;
+    font-weight: bold;
+    text-align: center;
+}
+
+.word-display {
+    height:24px;
+    
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 8px;
 }
 
 .player-button {
@@ -132,17 +141,10 @@ body {
     gap: 8px;
 }
 
-.word-display {
-    height:24px;
-    
-    font-size: 24px;
-    font-weight: bold;
-    text-align: center;
-    margin-bottom: 8px;
-}
-
 .empty {
     background-color: dimgray;
+
+    cursor: not-allowed;
 }
 
 .selected {

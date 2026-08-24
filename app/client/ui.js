@@ -1,5 +1,6 @@
-import { isValidWord, playWord } from "../battle/combat.js";
+import { isValidWord, playWord, selectShuffle } from "../battle/combat.js";
 import { createGameState, getPlayer, getOpponent, MAX_HEALTH } from "../battle/game.js";
+import { shuffleRack } from "../battle/rack.js";
 
 let myPlayerId = null;
 let currentWord = "";
@@ -7,9 +8,11 @@ let selectedTileIds = [];
 
 let playerRack = document.getElementById("playerRack");
 let wordDisplay = document.getElementById("wordDisplay");
+let playerUsername = document.getElementById("playerUsername");
 let playerHp = document.getElementById("playerHp");
 
 let opponentRack = document.getElementById("opponentRack");
+let opponentUsername = document.getElementById("opponentUsername");
 let opponentHp = document.getElementById("opponentHp");
 
 let playWordButton = document.getElementById("playWord");
@@ -92,16 +95,28 @@ function updateButtons() {
     returnAllButton.disabled = (currentWord.length === 0);
 }
 
+function renderPlayerUsername(gameState) {
+    let player = getPlayer(gameState, myPlayerId);
+
+    playerUsername.textContent = player.username;
+}
+
+function renderOpponentUsername(gameState) {
+    let opponent = getOpponent(gameState, myPlayerId);
+
+    opponentUsername.textContent = opponent.username;
+}
+
 function renderPlayerHp(gameState) {
     let player = getPlayer(gameState, myPlayerId);
 
-    playerHp.textContent = `HP: [${player.health}/${MAX_HEALTH}]`;
+    playerHp.textContent = `HP: (${player.health}/${MAX_HEALTH})`;
 }
 
 function renderOpponentHp(gameState) {
     let opponent = getOpponent(gameState, myPlayerId);
 
-    opponentHp.textContent = `HP: [${opponent.health}/${MAX_HEALTH}]`;
+    opponentHp.textContent = `HP: (${opponent.health}/${MAX_HEALTH})`;
 }
 
 function clearRack(rack) {
@@ -148,6 +163,20 @@ returnAllButton.addEventListener("click", () => {
     returnAllButton.disabled = true;
 })
 
+shuffleButton.addEventListener("click", () => {
+    let player = getPlayer(gameState, myPlayerId);
+
+    let result = selectShuffle(gameState, player);
+    console.log(`${player.username} shuffled!`)
+
+    selectedTileIds = [];
+    currentWord = "";
+
+    renderPlayerRack(gameState);
+    renderWordDisplay();
+    playWordButton.disabled = true;
+    returnAllButton.disabled = true;
+})
 
 let users = [
 	{
@@ -162,11 +191,13 @@ let users = [
 
 let gameState = createGameState(users);
 
-setPlayerId("0001");
+setPlayerId("0002");
 
 renderPlayerRack(gameState);
 renderOpponentRack(gameState);
+renderPlayerUsername(gameState);
 renderPlayerHp(gameState);
+renderOpponentUsername(gameState);
 renderOpponentHp(gameState);
 
 console.log(gameState.players[0].rack);
