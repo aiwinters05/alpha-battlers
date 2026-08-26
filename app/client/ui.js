@@ -1,7 +1,7 @@
-import { calculateDamage, playWord, selectShuffle } from "../battle/combat.js";
-import { createGameState, getPlayer, getOpponent, MAX_HEALTH, isPlayerTurn } from "../battle/game.js";
-import { getPlayedTiles } from "../battle/rack.js";
-import { isValidWord, loadWords } from "../battle/validator.js";
+import { calculateDamage, playWord, selectShuffle } from "../gameplay/combat.js";
+import { createGameState, getPlayer, getOpponent, MAX_HEALTH, isPlayerTurn } from "../gameplay/game.js";
+import { getPlayedTiles } from "../gameplay/rack.js";
+import { isValidWord, loadWords } from "../gameplay/validator.js";
 
 let myPlayerId = null;
 let currentWord = "";
@@ -13,7 +13,7 @@ let damageDisplay = document.getElementById("damageDisplay");
 let playerUsername = document.getElementById("playerUsername");
 let playerHp = document.getElementById("playerHp");
 
-let eventLog = document.getElementsById("eventLog");
+let eventLog = document.getElementById("eventLog");
 
 let opponentRack = document.getElementById("opponentRack");
 let opponentUsername = document.getElementById("opponentUsername");
@@ -38,6 +38,8 @@ export function renderGame(gameState) {
     renderDamageDisplay(gameState);
     updateButtons(gameState);
 }
+
+
 
 function renderPlayerArea(gameState) {
     if (!isPlayerTurn(gameState, myPlayerId)) {

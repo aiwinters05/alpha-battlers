@@ -10,9 +10,9 @@ import {
   attachGameState,
   getGameConnection,
 } from "./connections.js";
-import { createGameState, getPlayer, getOpponent, isPlayerTurn } from "./battle/game.js";
-import { playWord, selectShuffle } from "./battle/combat.js";
-import { loadWords } from "./battle/validator.js";
+import { createGameState, getPlayer, getOpponent, isPlayerTurn } from "./gameplay/game.js";
+import { playWord, selectShuffle } from "./gameplay/combat.js";
+import { loadWords } from "./gameplay/validator.js";
 
 await loadWords(); 
 
@@ -20,7 +20,7 @@ const app = express();
 
 app.use(express.static("public"));
 app.use("/client", express.static("client"));
-app.use("/battle", express.static("battle"));
+app.use("/gameplay", express.static("gameplay"));
 app.use("/data", express.static("data"));
 
 app.listen(3000, () => {
