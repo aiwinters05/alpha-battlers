@@ -1,0 +1,80 @@
+import { fillRack } from "./rack.js";
+
+export let MAX_HEALTH = 60;
+
+export function createGameState(users) {
+    let orderedUsers;
+
+    if (Math.random() < 0.5) { 
+        orderedUsers = [users[0], users[1]];
+    } else {
+        orderedUsers = [users[1], users[0]];
+    }
+
+    let players = [];
+
+    for (let i = 0; i < 2; i++) {
+        let user = orderedUsers[i];
+
+        let player = {
+            id: user.id,
+            username: user.username,
+            turnOrder: i,
+            rack: [],
+            health: MAX_HEALTH
+        }
+
+        fillRack(player);
+        
+        players.push(player);
+    }
+
+    let gameState = {
+        players: players,
+        currentPlayer: 0,
+        turn: 1
+    }
+
+    return gameState;
+}
+
+export function getPlayer(gameState, playerId) {
+    for (let i = 0; i < gameState.players.length; i++) {
+
+        if (gameState.players[i].id === playerId) {
+
+            return gameState.players[i];
+        }
+    }
+}
+
+
+export function getOpponent(gameState, playerId) {
+    for (let i = 0; i < gameState.players.length; i++) {
+
+        if (gameState.players[i].id !== playerId) {
+
+            return gameState.players[i];
+        }
+    }
+}
+
+export function getCurrentPlayer(gameState) {
+    return gameState.players[gameState.currentPlayer];
+}
+
+export function isPlayerTurn(gameState, playerId) {
+    let player = getPlayer(gameState, playerId);
+
+    return gameState.currentPlayer === player.turnOrder;
+}
+
+export function switchTurn(gameState) {
+    if (gameState.currentPlayer === 0) {
+        gameState.currentPlayer = 1;
+    } else {
+        gameState.currentPlayer = 0;
+    }
+
+    gameState.turn++;
+}
