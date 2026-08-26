@@ -1,16 +1,19 @@
-import { playWord, selectShuffle } from "../battle/combat.js";
-import { createGameState, getPlayer, getOpponent, MAX_HEALTH } from "../battle/game.js";
+import { calculateDamage, playWord, selectShuffle } from "../battle/combat.js";
+import { createGameState, getPlayer, getOpponent, MAX_HEALTH, isPlayerTurn } from "../battle/game.js";
+import { getPlayedTiles } from "../battle/rack.js";
 import { isValidWord, loadWords } from "../battle/validator.js";
 
 let myPlayerId = null;
 let currentWord = "";
 let selectedTileIds = [];
-let allUsedTileIds = [];
 
 let playerRack = document.getElementById("playerRack");
 let wordDisplay = document.getElementById("wordDisplay");
+let damageDisplay = document.getElementById("damageDisplay");
 let playerUsername = document.getElementById("playerUsername");
 let playerHp = document.getElementById("playerHp");
+
+let eventLog = document.getElementsById("eventLog");
 
 let opponentRack = document.getElementById("opponentRack");
 let opponentUsername = document.getElementById("opponentUsername");
@@ -20,14 +23,41 @@ let playWordButton = document.getElementById("playWord");
 let returnAllButton = document.getElementById("returnAll");
 let shuffleButton = document.getElementById("shuffle");
 
-playWordButton.disabled = true;
-returnAllButton.disabled = true;
+disableAllButtons();
 
 export function setPlayerId(playerId) {
     myPlayerId = playerId;
 }
 
-export function renderPlayerRack(gameState) {
+export function renderGame(gameState) {
+    renderPlayerArea(gameState);
+
+    renderOpponentArea(gameState);
+
+    renderWordDisplay();
+    renderDamageDisplay(gameState);
+    updateButtons(gameState);
+}
+
+function renderPlayerArea(gameState) {
+    if (!isPlayerTurn(gameState, myPlayerId)) {
+        playerRack.classList.add("rack-disabled");
+    } else {
+        playerRack.classList.remove("rack-disabled");
+    }
+    renderPlayerRack(gameState);
+    renderPlayerUsername(gameState);
+    renderPlayerHp(gameState);
+}
+
+function renderOpponentArea(gameState) {
+    renderOpponentRack(gameState);
+    renderOpponentUsername(gameState);
+    renderOpponentHp(gameState);
+} 
+
+
+function renderPlayerRack(gameState) {
     // returns the player object
     let player = getPlayer(gameState, myPlayerId);
     
@@ -39,9 +69,14 @@ export function renderPlayerRack(gameState) {
 
     for (let i = 0; i < player.rack.length; i++) {
         let tile = player.rack[i];
-        let td = row.children[i];
-        
+
+        let temp = row.children[i];
+        let td = temp.cloneNode(true);
+
+        row.replaceChild(td, temp);
+
         td.classList.add("tile");
+        td.classList.add("player-tile");
 
         //removes CSS that makes it appear empty
         td.classList.remove("empty");
@@ -53,22 +88,23 @@ export function renderPlayerRack(gameState) {
         points.textContent = tile.points;
 
         td.addEventListener("click", () => {
-            if (!selectedTileIds.includes(tile.id) || !allUsedTileIds.includes(tile.id)) {
-                //adds tile ID to list of tile IDs that is used to identify the word
+            //checks if tile ID has already been selected or used previously
+            if (!selectedTileIds.includes(tile.id)) {
+                //adds tile ID to list of tile IDs that is used to identify the current word
+                //and to a list of all previously used tile IDs
                 selectedTileIds.push(tile.id);
-                allUsedTileIds.push(tile.id);
                 
                 //adds CSS that makes it appear selected
                 td.classList.add("selected");
                 
                 //adds letter to word display and string of current word
-                updateCurrentWord(tile.letter);
+                updateCurrentWord(gameState, tile.letter);
             }
         })
     }
 }
 
-export function renderOpponentRack(gameState) {
+function renderOpponentRack(gameState) {
     let opponent = getOpponent(gameState, myPlayerId);
     
     clearRack(opponentRack);
@@ -80,6 +116,7 @@ export function renderOpponentRack(gameState) {
         let td = row.children[i];
         
         td.classList.add("tile");
+        td.classList.add("opponent-tile");
         td.classList.remove("empty");
 
         let letter = td.children[0];
@@ -88,21 +125,22 @@ export function renderOpponentRack(gameState) {
     }
 }
 
-function updateCurrentWord(letter) {
-    currentWord += letter;
+function clearRack(rack) {
+    let tbody = rack.children[0]; 
+    let row = tbody.children[0];
 
-    renderWordDisplay();
+    for (let i = 0; i < row.children.length; i++) {
+        let tile = row.children[i];
+    
+        let letter = tile.children[0];
+        let points = tile.children[1];
 
-    updateButtons();
-}
+        letter.textContent = "";
+        points.textContent = "";
 
-function renderWordDisplay() {
-    wordDisplay.textContent = currentWord;
-}
-
-function updateButtons() {
-    playWordButton.disabled = !isValidWord(currentWord);
-    returnAllButton.disabled = (currentWord.length === 0);
+        tile.classList.add("empty");
+        tile.classList.remove("selected");
+    }
 }
 
 function renderPlayerUsername(gameState) {
@@ -129,32 +167,41 @@ function renderOpponentHp(gameState) {
     opponentHp.textContent = `HP: (${opponent.health}/${MAX_HEALTH})`;
 }
 
-function clearRack(rack) {
-    let tbody = rack.children[0]; 
-    let row = tbody.children[0];
-
-    for (let i = 0; i < row.children.length; i++) {
-        let tile = row.children[i];
-    
-        let letter = tile.children[0];
-        let points = tile.children[1];
-
-        letter.textContent = "";
-        points.textContent = "";
-
-        tile.classList.add("empty");
-        tile.classList.remove("selected");
-    }
+function renderWordDisplay() {
+    wordDisplay.textContent = currentWord;
 }
 
-export function resetSelectedTiles(gameState) {
-    selectedTileIds = [];
-    currentWord = "";
+function renderDamageDisplay(gameState) {
+    let player = getPlayer(gameState, myPlayerId);
 
-    renderPlayerRack(gameState);
-    renderWordDisplay();
+    let playedTiles = getPlayedTiles(player, selectedTileIds);
+
+    let damage = calculateDamage(playedTiles);
+
+    if (damage === 0 || !isValidWord(currentWord)) {
+        damageDisplay.textContent = "";
+    } else {
+        damageDisplay.textContent = `${damage} damage`;
+    }
+    
+}
+
+function updateButtons(gameState) {
+    if (!isPlayerTurn(gameState, myPlayerId)) {
+        disableAllButtons();
+
+        return;
+    }
+
+    playWordButton.disabled = !(isValidWord(currentWord) && currentWord.length >= 3);
+    returnAllButton.disabled = (currentWord.length === 0);
+    shuffleButton.disabled = false;
+}
+
+function disableAllButtons() {
     playWordButton.disabled = true;
     returnAllButton.disabled = true;
+    shuffleButton.disabled = true;
 }
 
 playWordButton.addEventListener("click", () => {
@@ -162,13 +209,16 @@ playWordButton.addEventListener("click", () => {
 
     let result = playWord(gameState, player, selectedTileIds);
     console.log(`${player.username} played ${result.word} for ${result.damage} damage!`)
-    renderOpponentHp(gameState);
 
-    resetSelectedTiles(gameState);    
+    resetSelectedTiles();
+    
+    renderGame(gameState);
 })
 
 returnAllButton.addEventListener("click", () => {
-    resetSelectedTiles(gameState);  
+    resetSelectedTiles();  
+
+    renderGame(gameState);
 })
 
 shuffleButton.addEventListener("click", () => {
@@ -177,8 +227,24 @@ shuffleButton.addEventListener("click", () => {
     let result = selectShuffle(gameState, player);
     console.log(`${player.username} shuffled!`)
 
-    resetSelectedTiles(gameState);  
+    resetSelectedTiles(); 
+    
+    renderGame(gameState);
 })
+
+function updateCurrentWord(gameState, letter) {
+    currentWord += letter;
+
+    renderWordDisplay();
+    renderDamageDisplay(gameState);
+
+    updateButtons(gameState);
+}
+
+function resetSelectedTiles() {
+    selectedTileIds = [];
+    currentWord = "";
+}
 
 await loadWords();
 
@@ -197,9 +263,4 @@ let gameState = createGameState(users);
 
 setPlayerId("0001");
 
-renderPlayerRack(gameState);
-renderOpponentRack(gameState);
-renderPlayerUsername(gameState);
-renderPlayerHp(gameState);
-renderOpponentUsername(gameState);
-renderOpponentHp(gameState);
+renderGame(gameState);
