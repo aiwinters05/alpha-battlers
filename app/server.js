@@ -1,26 +1,36 @@
-const express = require("express");
-const WebSocket = require("ws");
-const {
+import express from "express";
+import { WebSocketServer } from "ws";
+import {
   createRequest,
   acceptRequest,
   rejectRequest,
   getConnectionForUser,
   getOtherUser,
   endConnection,
-  isConnected,
-} = require("./connections");
+  attachGameState,
+  getGameConnection,
+} from "./connections.js";
+import { createGameState, getPlayer, getOpponent, isPlayerTurn } from "./battle/game.js";
+import { playWord, selectShuffle } from "./battle/combat.js";
+import { loadWords } from "./battle/validator.js";
+
+await loadWords(); 
 
 const app = express();
 
 app.use(express.static("public"));
+app.use("/client", express.static("client"));
+app.use("/battle", express.static("battle"));
+app.use("/data", express.static("data"));
 
 app.listen(3000, () => {
   console.log("Website: http://localhost:3000");
 });
 
-const wss = new WebSocket.Server({ port: 3001 });
+const wss = new WebSocketServer({ port: 3001 });
 
-const clients = new Map(); // userId -> ws
+const clients = new Map();   // userId -> ws
+const usernames = new Map(); // userId -> username
 
 let uniqueId = 1;
 
@@ -37,8 +47,35 @@ function sendToUser(userId, payload) {
   if (ws) send(ws, payload);
 }
 
+// only send players own rack to them
+function publicRack(player) {
+  return player.rack.map((t) => ({ id: t.id, letter: t.letter, points: t.points }));
+}
+
+function sendGameStart(gameState) {
+  for (const player of gameState.players) {
+    const opponent = getOpponent(gameState, player.id);
+    sendToUser(player.id, {
+      type: "game_start",
+      you: {
+        id: player.id,
+        health: player.health,
+        rack: publicRack(player),
+        turnOrder: player.turnOrder,
+      },
+      opponent: {
+        id: opponent.id,
+        username: opponent.username,
+        health: opponent.health,
+        rackCount: opponent.rack.length,
+      },
+      currentPlayer: gameState.players[gameState.currentPlayer].id,
+    });
+  }
+}
+
 wss.on("connection", (ws) => {
-  const newId = getId(); // fixed: was missing let/const, causing a shared global
+  const newId = getId();
 
   clients.set(newId, ws);
   console.log(`${newId} connected`);
@@ -55,26 +92,17 @@ wss.on("connection", (ws) => {
     }
 
     switch (msg.type) {
-        // testing direct message
-      case "dm": {
-        const toId = Number(msg.to);
-        const receiver = clients.get(toId);
-        if (!receiver) {
-          send(ws, { type: "error", message: "Player not found" });
-          return;
-        }
-        send(receiver, { type: "dm", from: newId, message: msg.message });
+      case "set_username": {
+        usernames.set(newId, String(msg.username || `Player${newId}`));
         break;
       }
 
-      // connection requests
       case "connect_request": {
         const toId = Number(msg.to);
         try {
           const conn = createRequest(newId, toId);
           const receiver = clients.get(toId);
           if (!receiver) {
-            // target isn't online — roll back the request we just created
             endConnection(newId);
             send(ws, { type: "connect_request_failed", message: "Player not found" });
             return;
@@ -94,8 +122,16 @@ wss.on("connection", (ws) => {
         try {
           const conn = acceptRequest(msg.connectionId, newId);
           const otherUser = getOtherUser(newId);
-          send(ws, { type: "connect_accepted", connectionId: conn.id, with: otherUser });
-          sendToUser(otherUser, { type: "connect_accepted", connectionId: conn.id, with: newId });
+
+          // build the two user objects game.js is expecting
+          const users = [
+            { id: newId, username: usernames.get(newId) || `Player${newId}` },
+            { id: otherUser, username: usernames.get(otherUser) || `Player${otherUser}` },
+          ];
+          const gameState = createGameState(users);
+          attachGameState(conn.id, gameState);
+
+          sendGameStart(gameState);
         } catch (err) {
           send(ws, { type: "connect_request_failed", message: err.message });
         }
@@ -105,8 +141,7 @@ wss.on("connection", (ws) => {
       case "connect_reject": {
         try {
           const conn = rejectRequest(msg.connectionId, newId);
-          const requester = conn.userA;
-          sendToUser(requester, { type: "connect_rejected", connectionId: conn.id });
+          sendToUser(conn.userA, { type: "connect_rejected", connectionId: conn.id });
         } catch (err) {
           send(ws, { type: "connect_request_failed", message: err.message });
         }
@@ -122,19 +157,72 @@ wss.on("connection", (ws) => {
         break;
       }
 
-      // game move
       case "play_word": {
-        if (!isConnected(newId)) {
-          send(ws, { type: "error", message: "You are not connected to an opponent" });
+        const conn = getGameConnection(newId);
+        if (!conn || !conn.gameState) {
+          send(ws, { type: "error", message: "You are not in an active game" });
           return;
         }
-        const otherUser = getOtherUser(newId);
-        sendToUser(otherUser, {
-          type: "opponent_played",
-          from: newId,
-          word: msg.word,
-          points: msg.points,
+        const gameState = conn.gameState;
+
+        if (!isPlayerTurn(gameState, newId)) {
+          send(ws, { type: "error", message: "It's not your turn" });
+          return;
+        }
+
+        const player = getPlayer(gameState, newId);
+        const opponent = getOpponent(gameState, newId);
+        const result = playWord(gameState, player, msg.tileIds || []);
+
+        if (result.event === "invalidWord") {
+          send(ws, { type: "invalid_word", word: result.word });
+          return;
+        }
+
+        // give the player their own updated rack + result
+        send(ws, {
+          type: result.event, // "playWord" or "gameFinish"
+          word: result.word,
+          damage: result.damage,
+          yourHealth: player.health,
+          opponentHealth: opponent.health,
+          rack: publicRack(player),
         });
+
+        //update opponents info (dont send the rack)
+        sendToUser(opponent.id, {
+          type: result.event === "gameFinish" ? "gameFinish" : "opponentPlayed",
+          word: result.word,
+          damage: result.damage,
+          yourHealth: opponent.health,
+          opponentHealth: player.health,
+        });
+
+        if (result.event === "gameFinish") {
+          endConnection(newId);
+        }
+        break;
+      }
+
+      case "shuffle": {
+        const conn = getGameConnection(newId);
+        if (!conn || !conn.gameState) {
+          send(ws, { type: "error", message: "You are not in an active game" });
+          return;
+        }
+        const gameState = conn.gameState;
+
+        if (!isPlayerTurn(gameState, newId)) {
+          send(ws, { type: "error", message: "It's not your turn" });
+          return;
+        }
+
+        const player = getPlayer(gameState, newId);
+        const opponent = getOpponent(gameState, newId);
+        selectShuffle(gameState, player);
+
+        send(ws, { type: "shuffle", rack: publicRack(player) });
+        sendToUser(opponent.id, { type: "opponentShuffled" });
         break;
       }
 
@@ -150,6 +238,7 @@ wss.on("connection", (ws) => {
       sendToUser(otherUser, { type: "opponent_disconnected", from: newId });
     }
     clients.delete(newId);
+    usernames.delete(newId);
     console.log(`Client ${newId} disconnected`);
   });
 });

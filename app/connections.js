@@ -7,7 +7,7 @@ const connections = new Map();
 const userToConnection = new Map(); 
 
 // create pending request until other user accepts
-function createRequest(fromUserId, toUserId) {
+export function createRequest(fromUserId, toUserId) {
   if (fromUserId === toUserId) {
     throw new Error("A user cannot connect to themselves");
   }
@@ -36,7 +36,7 @@ function createRequest(fromUserId, toUserId) {
 }
 
 
-function acceptRequest(connectionId, acceptingUserId) {
+export function acceptRequest(connectionId, acceptingUserId) {
   const conn = connections.get(connectionId);
   if (!conn) throw new Error("Connection not found");
   if (conn.status !== "pending") throw new Error("Connection is not pending");
@@ -50,7 +50,18 @@ function acceptRequest(connectionId, acceptingUserId) {
   return conn;
 }
 
-function rejectRequest(connectionId, rejectingUserId) {
+export function attachGameState(connectionId, gameState) {
+  const conn = connections.get(connectionId);
+  if (!conn) throw new Error("Connection not found");
+  conn.gameState = gameState;
+  return conn;
+}
+
+export function getGameConnection(userId) {
+  return getConnectionForUser(userId);
+}
+
+export function rejectRequest(connectionId, rejectingUserId) {
   const conn = connections.get(connectionId);
   if (!conn) throw new Error("Connection not found");
   if (conn.status !== "pending") throw new Error("Connection is not pending");
@@ -62,13 +73,13 @@ function rejectRequest(connectionId, rejectingUserId) {
   return conn;
 }
 
-function getConnectionForUser(userId) {
+export function getConnectionForUser(userId) {
   const connId = userToConnection.get(userId);
   return connId ? connections.get(connId) ?? null : null;
 }
 
 // get other user in a connection
-function getOtherUser(userId) {
+export function getOtherUser(userId) {
   const conn = getConnectionForUser(userId);
   if (!conn) return null;
   if (conn.userA === userId) return conn.userB;
@@ -77,7 +88,7 @@ function getOtherUser(userId) {
 }
 
 // end active or pending ocnnectoin
-function endConnection(userId) {
+export function endConnection(userId) {
   const conn = getConnectionForUser(userId);
   if (!conn) return null;
 
@@ -88,7 +99,7 @@ function endConnection(userId) {
   return conn;
 }
 
-function isConnected(userId) {
+export function isConnected(userId) {
   const conn = getConnectionForUser(userId);
   return !!conn && conn.status === "active";
 }
@@ -99,13 +110,3 @@ function cleanup(conn) {
   userToConnection.delete(conn.userB);
   connections.delete(conn.id);
 }
-
-module.exports = {
-  createRequest,
-  acceptRequest,
-  rejectRequest,
-  getConnectionForUser,
-  getOtherUser,
-  endConnection,
-  isConnected,
-};
