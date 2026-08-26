@@ -93,10 +93,18 @@ body {
 }
 
 .word-display {
-    height:24px;
+    height:32px;
     
-    font-size: 24px;
+    font-size: 32px;
     font-weight: bold;
+    text-align: center;
+    margin-bottom: 4px;
+}
+
+.damage-display {
+    height:14px;
+    
+    font-size: 14px;
     text-align: center;
     margin-bottom: 8px;
 }
@@ -141,6 +149,44 @@ body {
     gap: 8px;
 }
 
+.log-area {
+    display: flex;
+    flex-direction: column;
+
+    align-self: flex-start;
+}
+
+.log-heading {
+    height:24px;
+    
+    font-size: 24px;
+    margin-bottom: 8px;
+}
+
+.event-log {
+    width: 300px;
+    height: 350px;
+
+    background-color: dimgray;
+    border: 1px solid black;
+    
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.event-message {
+    width: 300px;
+    padding: 6px 8px;
+}
+
+.player-event {
+    background-color: whitesmoke;
+}
+
+.opponent-event {
+    background-color: silver;
+}
+
 .empty {
     background-color: dimgray;
 
@@ -151,4 +197,10 @@ body {
     background-color: cornflowerblue;
 
     cursor: not-allowed;
+}
+
+.rack-disabled {
+    filter: grayscale(60%);
+    
+    pointer-events: none;
 }
