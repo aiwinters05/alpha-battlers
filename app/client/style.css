@@ -1,0 +1,154 @@
+body {
+    min-height: 100vh;
+    padding: 20px;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+
+    box-sizing: border-box;
+
+    background-color:#ffedd9;
+}
+
+.player-area,
+.opponent-area {
+    width: 100%;
+
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+
+    gap: 15px;
+}
+
+.rack-area,
+.hud-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.hud-area {
+    gap: 7px;
+}
+
+.rack {
+    border-collapse: collapse;
+}
+
+.tile {
+    position: relative;
+
+    width: 50px;
+    height: 50px;
+
+    border: 1px solid black;
+
+    text-align: center;
+    vertical-align: middle;
+}
+
+.player-tile {
+    background-color:bisque;
+
+    cursor: pointer;
+}
+
+.opponent-tile {
+    background-color:silver;
+
+    cursor: not-allowed;
+}
+
+.letter {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.points {
+    position: absolute;
+    bottom: 5%;
+    right: 5%;
+
+    font-size: 14px;
+}
+
+.username-display {
+    min-width: 60px;
+
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+}
+
+.hp-display {
+    min-width: 60px;
+
+    font-size: 28px;
+    font-weight: bold;
+    text-align: center;
+}
+
+.word-display {
+    height:24px;
+    
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 8px;
+}
+
+.player-button {
+    min-width: 90px;
+    min-height: 20px;
+    padding: 10px 14px;
+
+    border: 1px solid black;
+    border-radius: 4px;
+
+    font-size: 14px;
+    font-weight: bold;
+
+    text-align: center;
+
+    cursor: pointer;
+}
+
+.play-word {
+    background-color: orangered
+}
+
+.return-all {
+    background-color: greenyellow
+}
+
+.shuffle {
+    background-color: plum;
+}
+
+.player-button:disabled {
+    background-color: dimgray;
+
+    cursor: not-allowed;
+}
+
+.player-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.empty {
+    background-color: dimgray;
+
+    cursor: not-allowed;
+}
+
+.selected {
+    background-color: cornflowerblue;
+
+    cursor: not-allowed;
+}
