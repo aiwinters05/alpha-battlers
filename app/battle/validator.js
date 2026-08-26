@@ -1,8 +1,13 @@
+import { readFile } from "fs/promises";
+import { fileURLToPath } from "url";
+import path from "path";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 let validWords = new Set();
 
 export async function loadWords() {
-    let response = await fetch("../data/words.txt");
-    let text = await response.text();
+    let text = await readFile(path.join(__dirname, "../data/words.txt"), "utf-8");
 
     validWords = new Set(text.split("\n"));
 }
