@@ -30,7 +30,7 @@
     </div>
     
     
-    <script>
+    <script type="module">
       let ws = null;
       let myId = null;
       let currentConnectionId = null;
@@ -82,14 +82,6 @@
             log(`incoming request from ${msg.from}`);
             break;
       
-          case "connect_accepted":
-            currentConnectionId = msg.connectionId;
-            opponentId = msg.with;
-            document.getElementById("opponent-id").textContent = opponentId;
-            log(`connected to opponent ${opponentId}`);
-            clearIncoming();
-            break;
-      
           case "connect_rejected":
             log(`your request was rejected`);
             break;
@@ -97,16 +89,19 @@
           case "connect_request_failed":
             log(`request failed: ${msg.message}`);
             break;
+
+          case "game_start":
+            // both players are matched and the server has built the real
+            // gameState — hand this socket + payload off to the battle page.
+            log("game starting...");
+            startBattle(msg);
+            break;
       
           case "opponent_disconnected":
             log(`opponent ${msg.from} disconnected`);
             currentConnectionId = null;
             opponentId = null;
             document.getElementById("opponent-id").textContent = "none";
-            break;
-      
-          case "opponent_played":
-            log(`opponent played "${msg.word}" for ${msg.points} points`);
             break;
       
           case "error":
@@ -123,6 +118,37 @@
         document.getElementById("incoming-text").textContent = "none";
         document.getElementById("accept-btn").disabled = true;
         document.getElementById("reject-btn").disabled = true;
+      }
+
+      async function startBattle(gameStartMsg) {
+        // fetch the battle page's markup and swap it in — this is a DOM
+        // replacement, not a real navigation, so `ws` (declared above)
+        // stays open and gets handed straight to ui.js.
+        const response = await fetch("/client/battle.html");
+        const html = await response.text();
+
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, "text/html");
+
+        // pull in the battle page's own stylesheet(s) — swapping body innerHTML
+        // alone won't touch <head>, so its CSS wouldn't otherwise load
+        doc.head.querySelectorAll('link[rel="stylesheet"]').forEach((link) => {
+          const href = link.getAttribute("href");
+          // resolve relative to /client/ since that's where the fetched page lives
+          const resolvedHref = new URL(href, `${location.origin}/client/`).href;
+          if (!document.querySelector(`link[href="${resolvedHref}"]`)) {
+            const newLink = document.createElement("link");
+            newLink.rel = "stylesheet";
+            newLink.href = resolvedHref;
+            document.head.appendChild(newLink);
+          }
+        });
+
+        document.body.innerHTML = doc.body.innerHTML;
+
+        // scripts injected via innerHTML don't execute, so load ui.js manually
+        const { initBattle } = await import("/client/ui.js");
+        initBattle(ws, gameStartMsg);
       }
       
       
