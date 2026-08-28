@@ -1,17 +1,22 @@
-import { getPlayer, getOpponent, MAX_HEALTH } from "../gameplay/game.js";
+import { calculateDamage, playWord, selectShuffle } from "../gameplay/combat.js";
+import { createGameState, getPlayer, getOpponent, MAX_HEALTH, isPlayerTurn, switchTurn } from "../gameplay/game.js";
+import { getPlayedTiles } from "../gameplay/rack.js";
+import { isValidWord, loadWords } from "../gameplay/validator.js";
 
-let ws = null;
 let myPlayerId = null;
 let currentWord = "";
 let selectedTileIds = [];
-let allUsedTileIds = [];
+// stuff to communicate with server
+let ws = null;
 let gameState = null;
-let myTurn = false;
 
 let playerRack = document.getElementById("playerRack");
 let wordDisplay = document.getElementById("wordDisplay");
+let damageDisplay = document.getElementById("damageDisplay");
 let playerUsername = document.getElementById("playerUsername");
 let playerHp = document.getElementById("playerHp");
+
+let eventLog = document.getElementById("eventLog");
 
 let opponentRack = document.getElementById("opponentRack");
 let opponentUsername = document.getElementById("opponentUsername");
@@ -21,280 +26,413 @@ let playWordButton = document.getElementById("playWord");
 let returnAllButton = document.getElementById("returnAll");
 let shuffleButton = document.getElementById("shuffle");
 
-playWordButton.disabled = true;
-returnAllButton.disabled = true;
+disableAllButtons();
 
-export function initBattle(existingWs, startMsg) {
-  ws = existingWs;
-  myPlayerId = startMsg.you.id;
-
-  ws.addEventListener("message", (event) => {
-    handleMessage(JSON.parse(event.data));
-  });
-
-  // process the game_start message that was already received on the homepage
-  handleMessage(startMsg);
-}
-
+// leave button for disconnecting
 let leaveButton = document.createElement("button");
 leaveButton.id = "leaveGame";
 leaveButton.className = "player-button";
 leaveButton.textContent = "Leave Game";
 document.getElementById("playerButtons").appendChild(leaveButton);
- 
+
 leaveButton.addEventListener("click", () => {
   ws.send(JSON.stringify({ type: "disconnect_request" }));
   location.href = "/homepage/homepage.html";
 });
 
 
-// --- socket message handling ---
+// creating battle from opened websocket
+export function initBattle(existingWs, startMsg){
+  ws = existingWs;
 
+  ws.addEventListener("message", (event) => {
+    handleMessage(JSON.parse(event.data))
+  })
+
+  handleMessage(startMsg);
+}
+
+function logEvent(text){
+  if (!eventLog)
+    return;
+  let line = document.createElement("div");
+  line.textContent = text;
+  eventLog.appendChild(line);
+}
+
+export function setPlayerId(playerId) {
+    myPlayerId = playerId;
+}
+
+// new game state creation function
+// we need to create this new function so the server has its own one real game state to change
+// additionally, the client only stores the portions of it that its allowed to store so there isnt a privacy issue
+function buildGameStateFromStart(msg) {
+    let opponentTurnOrder = msg.you.turnOrder === 0 ? 1 : 0;
+ 
+    let currentPlayerTurnOrder = (msg.currentPlayer === msg.you.id) ? msg.you.turnOrder : opponentTurnOrder;
+ 
+    gameState = {
+        players: [
+            {
+                id: msg.you.id,
+                username: "You",
+                turnOrder: msg.you.turnOrder,
+                health: msg.you.health,
+                rack: msg.you.rack,
+            },
+            {
+                id: msg.opponent.id,
+                username: msg.opponent.username,
+                turnOrder: opponentTurnOrder,
+                health: msg.opponent.health,
+                rack: new Array(msg.opponent.rackCount).fill(null).map(() => ({ id: null, letter: "?", points: 0 })),
+            },
+        ],
+        currentPlayer: currentPlayerTurnOrder,
+        turn: 1,
+    };
+ 
+    myPlayerId = msg.you.id;
+}
+
+// socket message handling
 function handleMessage(msg) {
-  switch (msg.type) {
-    case "game_start":
-      setupGameState(msg);
-      break;
-
-    case "playWord":
-    case "gameFinish": {
-      // this is the result of MY OWN move
-      const me = getPlayer(gameState, myPlayerId);
-      me.rack = msg.rack;
-      me.health = msg.yourHealth;
-      const opp = getOpponent(gameState, myPlayerId);
-      opp.health = msg.opponentHealth;
-
-      renderPlayerRack(gameState);
-      renderPlayerHp(gameState);
-      renderOpponentHp(gameState);
-      resetSelectedTiles(gameState);
-
-      myTurn = msg.type === "gameFinish" ? false : false; // it's opponent's turn now
-      updateTurnUI();
-
-      if (msg.type === "gameFinish") {
-        alert(`You win! Played "${msg.word}" for ${msg.damage} damage.`);
-      }
-      break;
+    switch (msg.type) {
+        case "game_start":
+            buildGameStateFromStart(msg);
+            renderGame(gameState);
+            break;
+ 
+        case "playWord":
+        case "opponentPlayed":
+        case "gameFinish": {
+            if (msg.rack) {
+                // show own move
+                let me = getPlayer(gameState, myPlayerId);
+                me.rack = msg.rack;
+                me.health = msg.yourHealth;
+                let opp = getOpponent(gameState, myPlayerId);
+                opp.health = msg.opponentHealth;
+ 
+                logEvent(`${me.username} played ${msg.word} for ${msg.damage} damage!`);
+ 
+                resetSelectedTiles();
+ 
+                if (msg.type === "gameFinish") {
+                    renderGame(gameState);
+                    alert(`You win! Played "${msg.word}" for ${msg.damage} damage.`);
+                    location.href = "/homepage/homepage.html";
+                    break;
+                }
+ 
+                applyCurrentPlayer(gameState, msg.currentPlayer);
+                renderGame(gameState);
+            } else {
+                // other players move
+                let me = getPlayer(gameState, myPlayerId);
+                me.health = msg.yourHealth;
+                let opp = getOpponent(gameState, myPlayerId);
+                opp.health = msg.opponentHealth;
+ 
+                logEvent(`${opp.username} played ${msg.word} for ${msg.damage} damage!`);
+ 
+                if (msg.type === "gameFinish") {
+                    renderGame(gameState);
+                    alert(`You lost. ${opp.username} played "${msg.word}" for ${msg.damage} damage.`);
+                    location.href = "/homepage/homepage.html";
+                    break;
+                }
+ 
+                applyCurrentPlayer(gameState, msg.currentPlayer);
+                renderGame(gameState);
+            }
+            break;
+        }
+ 
+        case "invalid_word":
+            logEvent(`"${msg.word}" is not a valid word.`);
+            break;
+ 
+        case "shuffle": {
+            let me = getPlayer(gameState, myPlayerId);
+            me.rack = msg.rack;
+            logEvent(`${me.username} shuffled!`);
+            resetSelectedTiles();
+            applyCurrentPlayer(gameState, msg.currentPlayer);
+            renderGame(gameState);
+            break;
+        }
+ 
+        case "opponentShuffled": {
+            let opp = getOpponent(gameState, myPlayerId);
+            logEvent(`${opp.username} shuffled!`);
+            applyCurrentPlayer(gameState, msg.currentPlayer);
+            renderGame(gameState);
+            break;
+        }
+ 
+        case "opponent_disconnected":
+            alert("Your opponent disconnected.");
+            location.href = "/homepage/homepage.html";
+            break;
+ 
+        case "error":
+            logEvent(`Error: ${msg.message}`);
+            break;
+ 
+        default:
+            console.warn("unhandled message type:", msg.type);
     }
-
-    case "opponentPlayed": {
-      // opponent just played against ME
-      const me = getPlayer(gameState, myPlayerId);
-      me.health = msg.yourHealth;
-      const opp = getOpponent(gameState, myPlayerId);
-      opp.health = msg.opponentHealth;
-
-      renderPlayerHp(gameState);
-      renderOpponentHp(gameState);
-
-      myTurn = true; // it's my turn now
-      updateTurnUI();
-      break;
-    }
-
-    case "invalid_word":
-      alert(`"${msg.word}" is not a valid word.`);
-      break;
-
-    case "shuffle": {
-      const me = getPlayer(gameState, myPlayerId);
-      me.rack = msg.rack;
-      renderPlayerRack(gameState);
-      resetSelectedTiles(gameState);
-      myTurn = false;
-      updateTurnUI();
-      break;
-    }
-
-    case "opponentShuffled":
-      myTurn = true;
-      updateTurnUI();
-      break;
-
-    case "opponent_disconnected":
-      alert("Your opponent disconnected.");
-      break;
-
-    case "error":
-      console.error("server error:", msg.message);
-      alert(msg.message);
-      break;
-
-    default:
-      console.warn("unhandled message type:", msg.type);
-  }
 }
 
-function setupGameState(msg) {
-  const opponentTurnOrder = msg.you.turnOrder === 0 ? 1 : 0;
 
-  gameState = {
-    players: [
-      {
-        id: msg.you.id,
-        username: "You",
-        turnOrder: msg.you.turnOrder,
-        health: msg.you.health,
-        rack: msg.you.rack,
-      },
-      {
-        id: msg.opponent.id,
-        username: msg.opponent.username,
-        turnOrder: opponentTurnOrder,
-        health: msg.opponent.health,
-        rack: new Array(msg.opponent.rackCount).fill(null).map(() => ({ id: null, letter: "?", points: 0 })),
-      },
-    ],
-  };
+export function renderGame(gameState) {
+    renderPlayerArea(gameState);
 
-  myTurn = msg.currentPlayer === msg.you.id;
+    renderOpponentArea(gameState);
 
-  renderPlayerRack(gameState);
-  renderOpponentRack(gameState);
-  renderPlayerUsername(gameState);
-  renderPlayerHp(gameState);
-  renderOpponentUsername(gameState);
-  renderOpponentHp(gameState);
-  updateTurnUI();
+    renderWordDisplay();
+    renderDamageDisplay(gameState);
+    updateButtons(gameState);
 }
 
-function updateTurnUI() {
-  if (!myTurn) {
-    playWordButton.disabled = true;
-    returnAllButton.disabled = true;
-    shuffleButton.disabled = true;
-  } else {
-    shuffleButton.disabled = false;
-    updateButtons(); // playWord/returnAll depend on currentWord too
-  }
+// because client keeping track of turn led to bug where it stops switching and its no ones turn
+function applyCurrentPlayer(gameState, currentPlayerId) {
+    if (currentPlayerId == null) return;
+    let player = getPlayer(gameState, currentPlayerId);
+    if (player) gameState.currentPlayer = player.turnOrder;
 }
 
-// --- rendering (unchanged from before, just reading the local mirror) ---
+
+function renderPlayerArea(gameState) {
+    if (!isPlayerTurn(gameState, myPlayerId)) {
+        playerRack.classList.add("rack-disabled");
+    } else {
+        playerRack.classList.remove("rack-disabled");
+    }
+    renderPlayerRack(gameState);
+    renderPlayerUsername(gameState);
+    renderPlayerHp(gameState);
+}
+
+function renderOpponentArea(gameState) {
+    renderOpponentRack(gameState);
+    renderOpponentUsername(gameState);
+    renderOpponentHp(gameState);
+} 
+
 
 function renderPlayerRack(gameState) {
-  let player = getPlayer(gameState, myPlayerId);
+    // returns the player object
+    let player = getPlayer(gameState, myPlayerId);
+    
+    //iterates through, removes any text content + selected tile CSS
+    clearRack(playerRack);
 
-  clearRack(playerRack);
+    let tbody = playerRack.children[0];
+    let row = tbody.children[0];
 
-  let tbody = playerRack.children[0];
-  let row = tbody.children[0];
+    for (let i = 0; i < player.rack.length; i++) {
+        let tile = player.rack[i];
 
-  for (let i = 0; i < player.rack.length; i++) {
-    let tile = player.rack[i];
-    let td = row.children[i];
+        let temp = row.children[i];
+        let td = temp.cloneNode(true);
 
-    td.classList.add("tile");
-    td.classList.remove("empty");
+        row.replaceChild(td, temp);
 
-    let letter = td.children[0];
-    let points = td.children[1];
+        td.classList.add("tile");
+        td.classList.add("player-tile");
 
-    letter.textContent = tile.letter;
-    points.textContent = tile.points;
+        //removes CSS that makes it appear empty
+        td.classList.remove("empty");
 
-    td.addEventListener("click", () => {
-      if (!myTurn) return;
-      if (!selectedTileIds.includes(tile.id) || !allUsedTileIds.includes(tile.id)) {
-        selectedTileIds.push(tile.id);
-        allUsedTileIds.push(tile.id);
-        td.classList.add("selected");
-        updateCurrentWord(tile.letter);
-      }
-    });
-  }
+        let letter = td.children[0];
+        let points = td.children[1];
+
+        letter.textContent = tile.letter;
+        points.textContent = tile.points;
+
+        td.addEventListener("click", () => {
+            //checks if tile ID has already been selected or used previously
+            if (!selectedTileIds.includes(tile.id)) {
+                //adds tile ID to list of tile IDs that is used to identify the current word
+                //and to a list of all previously used tile IDs
+                selectedTileIds.push(tile.id);
+                
+                //adds CSS that makes it appear selected
+                td.classList.add("selected");
+                
+                //adds letter to word display and string of current word
+                updateCurrentWord(gameState, tile.letter);
+            }
+        })
+    }
 }
 
 function renderOpponentRack(gameState) {
-  let opponent = getOpponent(gameState, myPlayerId);
+    let opponent = getOpponent(gameState, myPlayerId);
+    
+    clearRack(opponentRack);
 
-  clearRack(opponentRack);
+    let tbody = opponentRack.children[0];
+    let row = tbody.children[0];
 
-  let tbody = opponentRack.children[0];
-  let row = tbody.children[0];
+    for (let i = 0; i < opponent.rack.length; i++) {
+        let td = row.children[i];
+        
+        td.classList.add("tile");
+        td.classList.add("opponent-tile");
+        td.classList.remove("empty");
 
-  for (let i = 0; i < opponent.rack.length; i++) {
-    let td = row.children[i];
-    td.classList.add("tile");
-    td.classList.remove("empty");
-    let letter = td.children[0];
-    letter.textContent = "?";
-  }
-}
+        let letter = td.children[0];
 
-function updateCurrentWord(letter) {
-  currentWord += letter;
-  renderWordDisplay();
-  updateButtons();
-}
-
-function renderWordDisplay() {
-  wordDisplay.textContent = currentWord;
-}
-
-function updateButtons() {
-  // NOTE: client-side word check here is just for UI (greying out the button).
-  // The server is still the one that actually validates and resolves the play.
-  playWordButton.disabled = !myTurn || currentWord.length === 0;
-  returnAllButton.disabled = !myTurn || currentWord.length === 0;
-}
-
-function renderPlayerUsername(gameState) {
-  playerUsername.textContent = "You";
-}
-
-function renderOpponentUsername(gameState) {
-  let opponent = getOpponent(gameState, myPlayerId);
-  opponentUsername.textContent = opponent.username;
-}
-
-function renderPlayerHp(gameState) {
-  let player = getPlayer(gameState, myPlayerId);
-  playerHp.textContent = `HP: (${player.health}/${MAX_HEALTH})`;
-}
-
-function renderOpponentHp(gameState) {
-  let opponent = getOpponent(gameState, myPlayerId);
-  opponentHp.textContent = `HP: (${opponent.health}/${MAX_HEALTH})`;
+        letter.textContent = "?"
+    }
 }
 
 function clearRack(rack) {
-  let tbody = rack.children[0];
-  let row = tbody.children[0];
+    let tbody = rack.children[0]; 
+    let row = tbody.children[0];
 
-  for (let i = 0; i < row.children.length; i++) {
-    let tile = row.children[i];
-    let letter = tile.children[0];
-    let points = tile.children[1];
-    letter.textContent = "";
-    points.textContent = "";
-    tile.classList.add("empty");
-    tile.classList.remove("selected");
-  }
+    for (let i = 0; i < row.children.length; i++) {
+        let tile = row.children[i];
+    
+        let letter = tile.children[0];
+        let points = tile.children[1];
+
+        letter.textContent = "";
+        points.textContent = "";
+
+        tile.classList.add("empty");
+        tile.classList.remove("selected");
+    }
 }
 
-function resetSelectedTiles(gameState) {
-  selectedTileIds = [];
-  currentWord = "";
-  renderPlayerRack(gameState);
-  renderWordDisplay();
-  updateTurnUI();
+function renderPlayerUsername(gameState) {
+    let player = getPlayer(gameState, myPlayerId);
+
+    playerUsername.textContent = player.username;
 }
 
-// --- button handlers now send socket messages instead of running logic locally ---
+function renderOpponentUsername(gameState) {
+    let opponent = getOpponent(gameState, myPlayerId);
+
+    opponentUsername.textContent = opponent.username;
+}
+
+function renderPlayerHp(gameState) {
+    let player = getPlayer(gameState, myPlayerId);
+
+    playerHp.textContent = `HP: (${player.health}/${MAX_HEALTH})`;
+}
+
+function renderOpponentHp(gameState) {
+    let opponent = getOpponent(gameState, myPlayerId);
+
+    opponentHp.textContent = `HP: (${opponent.health}/${MAX_HEALTH})`;
+}
+
+function renderWordDisplay() {
+    wordDisplay.textContent = currentWord;
+}
+
+function renderDamageDisplay(gameState) {
+    let player = getPlayer(gameState, myPlayerId);
+
+    let playedTiles = getPlayedTiles(player, selectedTileIds);
+
+    let damage = calculateDamage(playedTiles);
+
+    if (damage === 0 || !isValidWord(currentWord)) {
+        damageDisplay.textContent = "";
+    } else {
+        damageDisplay.textContent = `${damage} damage`;
+    }
+    
+}
+
+function updateButtons(gameState) {
+    if (!isPlayerTurn(gameState, myPlayerId)) {
+        disableAllButtons();
+
+        return;
+    }
+
+    playWordButton.disabled = !(isValidWord(currentWord) && currentWord.length >= 3);
+    returnAllButton.disabled = (currentWord.length === 0);
+    shuffleButton.disabled = false;
+}
+
+function disableAllButtons() {
+    playWordButton.disabled = true;
+    returnAllButton.disabled = true;
+    shuffleButton.disabled = true;
+}
+
+// have bnutton presses send messages to server
 
 playWordButton.addEventListener("click", () => {
-  ws.send(JSON.stringify({ type: "play_word", tileIds: selectedTileIds }));
-  playWordButton.disabled = true; // avoid double-sends while waiting for server
-  returnAllButton.disabled = true;
-});
+    let player = getPlayer(gameState, myPlayerId);
+
+    let result = playWord(gameState, player, selectedTileIds);
+    console.log(`${player.username} played ${result.word} for ${result.damage} damage!`)
+
+    ws.send(JSON.stringify({ type: "play_word", tileIds: selectedTileIds }));
+
+    resetSelectedTiles();
+    
+    renderGame(gameState);
+})
 
 returnAllButton.addEventListener("click", () => {
-  resetSelectedTiles(gameState);
-});
+    resetSelectedTiles();  
+
+    renderGame(gameState);
+})
 
 shuffleButton.addEventListener("click", () => {
-  ws.send(JSON.stringify({ type: "shuffle" }));
-  shuffleButton.disabled = true;
-});
+    let player = getPlayer(gameState, myPlayerId);
+
+    let result = selectShuffle(gameState, player);
+    console.log(`${player.username} shuffled!`)
+
+    ws.send(JSON.stringify({ type: "shuffle" }));
+
+    resetSelectedTiles(); 
+    
+    renderGame(gameState);
+})
+
+function updateCurrentWord(gameState, letter) {
+    currentWord += letter;
+
+    renderWordDisplay();
+    renderDamageDisplay(gameState);
+
+    updateButtons(gameState);
+}
+
+function resetSelectedTiles() {
+    selectedTileIds = [];
+    currentWord = "";
+}
+
+await loadWords();
+
+// let users = [
+// 	{
+// 		id: "0001",
+// 		username: "Genevieve"
+// 	},
+// 	{
+// 		id: "0002",
+// 		username: "Aubry"
+// 	}
+// ];
+
+// let gameState = createGameState(users);
+
+// setPlayerId("0001");
+
+// renderGame(gameState);

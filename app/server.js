@@ -173,6 +173,7 @@ wss.on("connection", (ws) => {
         const player = getPlayer(gameState, newId);
         const opponent = getOpponent(gameState, newId);
         const result = playWord(gameState, player, msg.tileIds || []);
+        const currentPlayerId = gameState.players[gameState.currentPlayer].id;
 
         if (result.event === "invalidWord") {
           send(ws, { type: "invalid_word", word: result.word });
@@ -181,12 +182,13 @@ wss.on("connection", (ws) => {
 
         // give the player their own updated rack + result
         send(ws, {
-          type: result.event, // "playWord" or "gameFinish"
+          type: result.event,
           word: result.word,
           damage: result.damage,
           yourHealth: player.health,
           opponentHealth: opponent.health,
           rack: publicRack(player),
+          currentPlayer: currentPlayerId, 
         });
 
         //update opponents info (dont send the rack)
@@ -196,6 +198,8 @@ wss.on("connection", (ws) => {
           damage: result.damage,
           yourHealth: opponent.health,
           opponentHealth: player.health,
+          opponentRackCount: player.rack.length,
+          currentPlayer: currentPlayerId,  
         });
 
         if (result.event === "gameFinish") {
@@ -220,9 +224,10 @@ wss.on("connection", (ws) => {
         const player = getPlayer(gameState, newId);
         const opponent = getOpponent(gameState, newId);
         selectShuffle(gameState, player);
+        const currentPlayerId = gameState.players[gameState.currentPlayer].id;  // ← add
 
-        send(ws, { type: "shuffle", rack: publicRack(player) });
-        sendToUser(opponent.id, { type: "opponentShuffled" });
+        send(ws, { type: "shuffle", rack: publicRack(player), currentPlayer: currentPlayerId });  // ← add field
+        sendToUser(opponent.id, { type: "opponentShuffled", opponentRackCount: player.rack.length, currentPlayer: currentPlayerId });  // ← add field
         break;
       }
 
