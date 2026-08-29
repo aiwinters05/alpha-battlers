@@ -16,6 +16,7 @@ import { loadWords } from "./gameplay/validator.js";
 
 import cookieParser from "cookie-parser";
 import accountRoutes from "./accounts/routes-accounts.js";
+import * as presence from "./accounts/presence.js";
 
 
 
@@ -37,6 +38,8 @@ app.listen(3000, () => {
 });
 
 const wss = new WebSocketServer({ port: 3001 });
+
+await presence.clearAll();
 
 const clients = new Map();   // userId -> ws
 const usernames = new Map(); // userId -> username
@@ -83,13 +86,23 @@ function sendGameStart(gameState) {
   }
 }
 
-wss.on("connection", (ws) => {
+wss.on("connection", async (ws, request) => {
   const newId = getId();
 
   clients.set(newId, ws);
-  console.log(`${newId} connected`);
 
-  send(ws, { type: "id", id: newId });
+  // work out who this is from their login cookie
+  const user = await presence.identify(request);
+
+  if (user) {
+    ws.user = user;
+    usernames.set(newId, user.username);
+    await presence.setOnline(user.id);
+  }
+
+  console.log(`${newId} connected`, user ? `as ${user.username}` : "(not logged in)");
+
+  send(ws, { type: "id", id: newId, username: user ? user.username : null });
 
   ws.on("message", (data) => {
     let msg;
@@ -245,7 +258,7 @@ wss.on("connection", (ws) => {
     }
   });
 
-  ws.on("close", () => {
+  ws.on("close", async () => {
     const otherUser = getOtherUser(newId);
     const conn = endConnection(newId);
     if (conn && otherUser) {
@@ -253,6 +266,9 @@ wss.on("connection", (ws) => {
     }
     clients.delete(newId);
     usernames.delete(newId);
+    if (ws.user) {
+      await presence.setOffline(ws.user.id);
+    }
     console.log(`Client ${newId} disconnected`);
   });
 });

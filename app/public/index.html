@@ -30,11 +30,11 @@
         let signinButton = document.getElementById("signin");
 
         joinButton.addEventListener("click", () => {
-            console.log("join button clicked");
+            window.location.href = "login.html?mode=signup";
         });
 
         signinButton.addEventListener("click", () => {
-            console.log("sign in button clicked");
+            window.location.href = "login.html";
         })
     </script>
 </body>

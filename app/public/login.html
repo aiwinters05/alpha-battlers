@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Log in</title>
+    <style>
+        body {
+            background: #020063;
+            background: linear-gradient(90deg,rgba(2, 0, 99, 1) 0%, rgba(9, 71, 121, 1) 35%, rgba(0, 255, 221, 1) 100%);
+            background-attachment: fixed;
+            font-family: sans-serif;
+        }
+
+        .text {
+            color: white;
+            text-align: center;
+        }
+
+        .box {
+            width: 300px;
+            margin: 80px auto;
+        }
+
+        input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 10px;
+            margin-top: 5px;
+            margin-bottom: 15px;
+            border: none;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: orange;
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        #switch {
+            background-color: gray;
+            margin-top: 10px;
+            padding: 10px;
+            font-size: 14px;
+        }
+
+        #message {
+            color: orange;
+            min-height: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="box text">
+        <h1>Alpha Battlers</h1>
+        <h3 id="title">Log in</h3>
+
+        <p>Username</p>
+        <input id="username" autocomplete="username">
+
+        <p>Password</p>
+        <input id="password" type="password" autocomplete="current-password">
+
+        <p id="message"></p>
+
+        <button id="submit">Log in</button>
+        <button id="switch">Need an account? Create one</button>
+    </div>
+
+    <script>
+        let mode = "login";
+
+        let title = document.getElementById("title");
+        let usernameInput = document.getElementById("username");
+        let passwordInput = document.getElementById("password");
+        let message = document.getElementById("message");
+        let submitButton = document.getElementById("submit");
+        let switchButton = document.getElementById("switch");
+
+        // the homepage's Join button links here with ?mode=signup
+        if (window.location.search.includes("mode=signup")) {
+            mode = "signup";
+            title.textContent = "Create an account";
+            submitButton.textContent = "Create account";
+            switchButton.textContent = "Already have an account? Log in";
+        }
+
+        // if the browser already has a valid cookie, skip the form
+        async function checkLogin() {
+            let response = await fetch("/api/me");
+
+            if (response.ok) {
+                window.location.href = "homepage/homepage.html";
+            }
+        }
+
+        async function submit() {
+            message.textContent = "";
+            submitButton.disabled = true;
+
+            let path = "/api/login";
+
+            if (mode === "signup") {
+                path = "/api/signup";
+            }
+
+            let response = await fetch(path, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    username: usernameInput.value,
+                    password: passwordInput.value
+                })
+            });
+
+            let data = await response.json();
+            submitButton.disabled = false;
+
+            if (!response.ok) {
+                // show whatever the server said went wrong
+                message.textContent = data.error;
+                return;
+            }
+
+            window.location.href = "homepage/homepage.html";
+        }
+
+        switchButton.addEventListener("click", () => {
+            if (mode === "login") {
+                mode = "signup";
+                title.textContent = "Create an account";
+                submitButton.textContent = "Create account";
+                switchButton.textContent = "Already have an account? Log in";
+            } else {
+                mode = "login";
+                title.textContent = "Log in";
+                submitButton.textContent = "Log in";
+                switchButton.textContent = "Need an account? Create one";
+            }
+
+            message.textContent = "";
+        });
+
+        submitButton.addEventListener("click", submit);
+
+        passwordInput.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                submit();
+            }
+        });
+
+        checkLogin();
+    </script>
+</body>
+
+</html>

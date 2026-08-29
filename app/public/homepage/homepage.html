@@ -69,7 +69,7 @@
         switch (msg.type) {
           case "id":
             myId = msg.id;
-            document.getElementById("my-id").textContent = myId;
+            document.getElementById("my-id").textContent = msg.username || myId
             log(`assigned id ${myId}`);
             break;
       
