@@ -2,10 +2,11 @@
  * database.js: every SQL query in the accounts system.
  */
 
-const pg = require("pg");
-const crypto = require("crypto");
-const env = require("./env.json");
+import pg from "pg";
+import crypto from "crypto";
+import { readFileSync } from "fs";
 
+const env = JSON.parse(readFileSync(new URL("./env.json", import.meta.url)));
 const pool = new pg.Pool(env);
 
 // An idle connection can break on its own (database restarted, laptop slept).
@@ -271,7 +272,7 @@ async function deleteStaleOnlineUsers(minutes) {
     return result.rowCount;
 }
 
-module.exports = {
+export {
     SESSION_HOURS,
     createUser,
     getUserByUsername,

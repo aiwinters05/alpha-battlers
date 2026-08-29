@@ -1,4 +1,4 @@
-const db = require("./database.js");
+import * as db from "./database.js";
 
 const USERNAME_PATTERN = /^[A-Za-z0-9_]{3,20}$/;
 const MIN_PASSWORD_LENGTH = 8;
@@ -76,7 +76,7 @@ function readTokenFromCookieHeader(cookieHeader) {
     return null;
 }
 
-module.exports = {
+export {
     cookieOptions,
     clearCookieOptions,
     validateCredentials,

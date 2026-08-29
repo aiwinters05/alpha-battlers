@@ -1,9 +1,10 @@
-const express = require("express");
-const argon2 = require("argon2");
-const db = require("./database.js");
-const auth = require("./auth.js");
+import express from "express";
+import argon2 from "argon2";
+import * as db from "./database.js";
+import * as auth from "./auth.js";
 
 const router = express.Router();
+
 
 router.post("/api/signup", async (req, res) => {
     let problem = auth.validateCredentials(req.body);
@@ -69,7 +70,7 @@ router.get("/api/me", auth.requireLogin, (req, res) => {
     res.json({ username: req.user.username, createdAt: req.user.created_at });
 });
 
-module.exports = router;
+export default router;
 
 
 

@@ -14,9 +14,18 @@ import { createGameState, getPlayer, getOpponent, isPlayerTurn } from "./gamepla
 import { playWord, selectShuffle } from "./gameplay/combat.js";
 import { loadWords } from "./gameplay/validator.js";
 
+import cookieParser from "cookie-parser";
+import accountRoutes from "./accounts/routes-accounts.js";
+
+
+
 await loadWords(); 
 
 const app = express();
+
+app.use(express.json());
+app.use(cookieParser());
+app.use(accountRoutes);
 
 app.use(express.static("public"));
 app.use("/client", express.static("client"));
