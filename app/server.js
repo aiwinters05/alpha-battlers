@@ -16,14 +16,12 @@ import { loadWords } from "./gameplay/validator.js";
 
 import cookieParser from "cookie-parser";
 import accountRoutes from "./accounts/routes-accounts.js";
-import cookie from "cookie";
-import * as db from "./accounts/database.js";
 
 
 
 await loadWords(); 
 
-const app = express();  
+const app = express();
 
 app.use(express.json());
 app.use(cookieParser());
@@ -85,19 +83,11 @@ function sendGameStart(gameState) {
   }
 }
 
-wss.on("connection", async (ws, req) => {
+wss.on("connection", (ws) => {
+  const newId = getId();
 
-  const cookies = cookie.parse(req.headers.cookie || "");
-  const token = cookies.token;
-  const user = await db.getUserForToken(token);
-
-  if (!user) {
-    ws.close(1008, "Not authenticated");
-    return;
-  }
-
-  const newId = user.id;          
-  const username = user.username;   
+  clients.set(newId, ws);
+  console.log(`${newId} connected`);
 
   send(ws, { type: "id", id: newId });
 
