@@ -5,9 +5,16 @@
 import pg from "pg";
 import crypto from "crypto";
 import { readFileSync } from "fs";
+let databaseConfig;
 
-const env = JSON.parse(readFileSync(new URL("./env.json", import.meta.url)));
-const pool = new pg.Pool(env);
+if (process.env.NODE_ENV === "production") {
+    // Fly sets NODE_ENV and DATABASE_URL automatically
+    databaseConfig = { connectionString: process.env.DATABASE_URL };
+} else {
+    databaseConfig = JSON.parse(readFileSync(new URL("./env.json", import.meta.url)));
+}
+
+const pool = new pg.Pool(databaseConfig);
 
 // An idle connection can break on its own (database restarted, laptop slept).
 // Without this listener Node treats that as a crash and kills the server.
@@ -18,7 +25,7 @@ pool.on("error", (error) => {
 pool.connect()
     .then((client) => {
         client.release();
-        console.log(`Connected to database ${env.database}`);
+        console.log(`Connected to database`);
     })
     .catch((error) => {
         console.log("Could not connect to database:", error.message);
