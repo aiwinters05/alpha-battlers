@@ -9,7 +9,7 @@ import {
   endConnection,
   attachGameState,
   getGameConnection,
-} from "../connections.js";
+} from "./connections.js";
 import { createGameState, getPlayer, getOpponent, isPlayerTurn } from "./gameplay/game.js";
 import { playWord, selectShuffle } from "./gameplay/combat.js";
 import { loadWords } from "./gameplay/validator.js";
