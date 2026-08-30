@@ -46,7 +46,8 @@
       }
       
       function connectToServer() {
-        ws = new WebSocket("ws://localhost:3001");
+        const protocol = location.protocol === "https:" ? "wss:" : "ws:";
+        ws = new WebSocket(`${protocol}//${location.host}`);
       
         ws.addEventListener("open", () => log("connected to server"));
       

@@ -13,31 +13,40 @@ import {
 import { createGameState, getPlayer, getOpponent, isPlayerTurn } from "./gameplay/game.js";
 import { playWord, selectShuffle } from "./gameplay/combat.js";
 import { loadWords } from "./gameplay/validator.js";
-
+import http from "http";
 import cookieParser from "cookie-parser";
 import accountRoutes from "./accounts/routes-accounts.js";
 import * as presence from "./accounts/presence.js";
 
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 
 await loadWords(); 
 
 const app = express();
 
+
+const server = http.createServer(app);
+
 app.use(express.json());
 app.use(cookieParser());
 app.use(accountRoutes);
 
-app.use(express.static("public"));
-app.use("/client", express.static("client"));
-app.use("/gameplay", express.static("gameplay"));
-app.use("/data", express.static("data"));
+app.use(express.static(path.join(__dirname, "public")));
+app.use("/client", express.static(path.join(__dirname, "client")));
+app.use("/gameplay", express.static(path.join(__dirname, "gameplay")));
+app.use("/data", express.static(path.join(__dirname, "data")));
 
-app.listen(3000, () => {
-  console.log("Website: http://localhost:3000");
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, "0.0.0.0", () => {
+  console.log(`Website: http://0.0.0.0:${PORT}`);
 });
 
-const wss = new WebSocketServer({ port: 3001 });
+const wss = new WebSocketServer({server});
 
 await presence.clearAll();
 
