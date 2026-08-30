@@ -7,8 +7,7 @@ import crypto from "crypto";
 import { readFileSync } from "fs";
 let databaseConfig;
 
-if (process.env.NODE_ENV === "production") {
-    // Fly sets NODE_ENV and DATABASE_URL automatically
+if (process.env.DATABASE_URL) {
     databaseConfig = { connectionString: process.env.DATABASE_URL };
 } else {
     databaseConfig = JSON.parse(readFileSync(new URL("./env.json", import.meta.url)));

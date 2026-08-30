@@ -7,7 +7,8 @@ const MIN_PASSWORD_LENGTH = 8;
 // Options used when handing out the cookie.
 const cookieOptions = {
     httpOnly: true,       // page scripts cannot read it
-    sameSite: "lax",      // not sent from other websites
+    sameSite: "lax",
+    secure: Boolean(process.env.DATABASE_URL),     // not sent from other websites
     maxAge: db.SESSION_HOURS * 60 * 60 * 1000,
 };
 
@@ -15,6 +16,7 @@ const cookieOptions = {
 const clearCookieOptions = {
     httpOnly: true,
     sameSite: "lax",
+    secure: Boolean(process.env.DATABASE_URL),
 };
 
 // Returns an error message, or null if the body is acceptable.
